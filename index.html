@@ -1,0 +1,61 @@
+<html>
+    <head>
+        <title>Digit Collector</title>
+        <script>
+        function update(set,get){
+            document.getElementById(set).innerHTML=get
+        }
+
+        function showElement(elementID) {
+            document.getElementById(elementID).style.display="inline-block"
+        }
+
+        function hideElement(elementID) {
+            document.getElementById(elementID).style.display="none"
+        }
+
+        var player = {
+            zeroes:10,
+            zps:0,
+            d0:{
+                amount:0,
+                cost:10
+            }
+        }
+
+        function buyDigit(i) {
+            if (player.d0.cost > player.zeroes) return 0; // can't buy!
+            player.zeroes -= player.d0.cost;
+            player.d0.cost = player.d0.cost*2;
+            player.d0.amount = player.d0.amount+1;
+            player.zps = player.d0.amount;
+            update("zeroesDisplay",player.zeroes);
+            update("zpsDisplay",player.zps);
+            update("d0amountDisplay",player.d0.amount);
+            update("d0costDisplay",player.d0.cost);
+        }
+
+        function tick(t) {
+            player.zeroes = player.zeroes+player.zps*t;
+            update("zeroesDisplay",Math.floor(player.zeroes));
+        }
+
+        function init() {
+            setInterval(function() {
+                tick(0.05)
+            }, 50)
+        }
+        </script>
+    </head>
+    <body onload="init()">
+        <p>You have <div id="zeroesDisplay">10</div> zeroes.
+        <p>You are getting <div id="zpsDisplay">0</div> zeroes per second.
+        <table>
+            <tr id="d0row">
+                <td>Digit 0</td>
+                <td><div id="d0amountDisplay">0</div></td>
+                <td><button id="d0button" onclick="buyDigit(0)">Cost: <div id="d0costDisplay">10</div></button></td>
+            </tr>
+        </table>
+    </body>
+</html>
