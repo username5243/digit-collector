@@ -1,61 +1,101 @@
 <html>
-    <head>
-        <title>Digit Collector</title>
-        <script>
-        function update(set,get){
-            document.getElementById(set).innerHTML=get
-        }
+	<head>
+		<title>Digit Collector</title>
+		<script>
+		function update(set,get){
+			document.getElementById(set).innerHTML=get
+		}
 
-        function showElement(elementID) {
-            document.getElementById(elementID).style.display="inline-block"
-        }
+		function showElement(elementID) {
+			document.getElementById(elementID).style.display="inline-block"
+		}
 
-        function hideElement(elementID) {
-            document.getElementById(elementID).style.display="none"
-        }
+		function hideElement(elementID) {
+			document.getElementById(elementID).style.display="none"
+		}
 
-        var player = {
-            zeroes:10,
-            zps:0,
-            d0:{
-                amount:0,
-                cost:10
-            }
-        }
+		var tab="digits"
 
-        function buyDigit(i) {
-            if (player.d0.cost > player.zeroes) return 0; // can't buy!
-            player.zeroes -= player.d0.cost;
-            player.d0.cost = player.d0.cost*2;
-            player.d0.amount = player.d0.amount+1;
-            player.zps = player.d0.amount;
-            update("zeroesDisplay",player.zeroes);
-            update("zpsDisplay",player.zps);
-            update("d0amountDisplay",player.d0.amount);
-            update("d0costDisplay",player.d0.cost);
-        }
+		function switchTab(tabName) {
+			hideElement(tab)
+			showElement(tabName)
+			tab=tabName
+		}
 
-        function tick(t) {
-            player.zeroes = player.zeroes+player.zps*t;
-            update("zeroesDisplay",Math.floor(player.zeroes));
-        }
+		var player = {
+			zeroes:10,
+			zps:0,
+			d0:{
+				amount:0,
+				cost:10
+			},
+		pluses:0
+		}
 
-        function init() {
-            setInterval(function() {
-                tick(0.05)
-            }, 50)
-        }
-        </script>
-    </head>
-    <body onload="init()">
-        <p>You have <div id="zeroesDisplay">10</div> zeroes.
-        <p>You are getting <div id="zpsDisplay">0</div> zeroes per second.
-        <table>
-            <tr id="d0row">
-                <td>Digit 0</td>
-                <td><div id="d0amountDisplay">0</div></td>
-                <td><button id="d0button" onclick="buyDigit(0)">Cost: <div id="d0costDisplay">10</div></button></td>
-            </tr>
-        </table>
-    </body>
+		function buyDigit(i) {
+			if (player.d0.cost > player.zeroes) return 0; // can't buy!
+			player.zeroes -= player.d0.cost;
+			player.d0.cost = player.d0.cost*2;
+			player.d0.amount = player.d0.amount+1;
+			player.zps = player.d0.amount;
+			update("zeroesDisplay",player.zeroes);
+			update("zpsDisplay",player.zps);
+			update("d0amountDisplay",player.d0.amount);
+			update("d0costDisplay",player.d0.cost);
+		}
+
+		function addDigits() {
+			showElement("additionTabButton")
+			var oldZeroes = player.zeroes; // temporary value for zeroes pre-prestige
+			player = {
+				zeroes:10,
+				zps:0,
+				d0:{
+					amount:0,
+					cost:10
+			},
+			pluses:player.pluses+Math.floor(Math.pow(oldZeroes/1000,1/3))
+			}
+			update("zeroesDisplay",player.zeroes);
+			update("zpsDisplay",player.zps);
+			update("d0amountDisplay",player.d0.amount);
+			update("d0costDisplay",player.d0.cost);
+		update("plusesDisplay",player.pluses);
+		hideElement("addButton")
+		}
+
+		function tick(t) {
+			player.zeroes = player.zeroes+player.zps*t;
+			update("zeroesDisplay",Math.floor(player.zeroes));
+		if(player.zeroes >= 1000) showElement("addButton");
+		update("plusesToBeGained",Math.floor(Math.pow(player.zeroes/1000,1/3)));
+		}
+
+		function init() {
+			setInterval(function() {
+				tick(0.05)
+			}, 50)
+		}
+		</script>
+	</head>
+	<body onload="init()">
+		<p>You have <div id="zeroesDisplay">10</div> 0s.
+		<p>You are getting <div id="zpsDisplay">0</div> 0s per second.
+		<button id="addButton" style="display:none" onclick="addDigits()">Add your digits to boost your production.<br>Gain <div id="plusesToBeGained">1</div> +s.</div></button>
+		<button id="digitsTabButton" onclick="switchTab("digits")">Digits</button>
+		<button id="additionTabButton" style="display:none" onclick="switchTab("addition")">Addition</button>
+		<div id="digits">
+			<table>
+				<tr id="d0row">
+					<td>Digit 0</td>
+					<td><div id="d0amountDisplay">0</div></td>
+					<td><button id="d0button" onclick="buyDigit(0)">Cost: <div id="d0costDisplay">10</div></button></td>
+				</tr>
+			</table>
+		</div>
+		<div style="display:none" id="addition">
+			<p>You have <div id="plusesDisplay">0</div> +s.
+			<p>Upgrades are coming soon!
+		</div>
+	</body>
 </html>
