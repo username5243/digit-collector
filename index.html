@@ -90,10 +90,50 @@
 			}
 		}
 
+		function save() {
+			localStorage.setItem('save',btoa(JSON.stringify(player)))
+		}
+
+		function load(save) {
+			try {
+				player=JSON.parse(atob(save))
+				
+				if(player.zeroes===undefined) player.zeroes = 10;
+				if(player.zps===undefined) player.zps = 0;
+				if(player.d0.amount===undefined) player.d0.amount = 0;
+				if(player.d0.cost===undefined) player.d0.cost = 10;
+				if(player.d0.mult===undefined) player.d0.mult = 1;
+				if(player.d0.upgradeCost===undefined) player.d0.upgradeCost = 1;
+				if(player.pluses===undefined) player.pluses = 0;
+				update("zeroesDisplay",player.zeroes);
+				update("zpsDisplay",player.zps);
+				update("d0amountDisplay",player.d0.amount);
+				update("d0costDisplay",player.d0.cost);
+				update("d0multDisplay",player.d0.mult);
+				update("d0upgradeCostDisplayDisplay",player.d0.upgradeCost);
+				update("plusesDisplay",player.pluses);
+			} catch (e) {
+				console.log('Your save failed to load: '+e)
+			}
+		}
+
+		function exportSave() {
+			var savefile=btoa(JSON.stringify(player))
+			showElement("exportInfo");
+			document.getElementById("exportSave").value=btoa(JSON.stringify(player))
+			}
+
+		function importSave() {
+			var input=prompt('Paste in your exported save and press enter.')
+			load(input);
+}
+
 		function init() {
-			setInterval(function() {
+			if(localStorage.getItem('save')!=null) load(localStorage.getItem('save'))
+				setInterval(function() {
 				tick(0.05)
 			}, 50)
+			setInterval(save,10000)
 		}
 		</script>
 	</head>
@@ -102,6 +142,7 @@
 		<p>You are getting <div id="zpsDisplay">0</div> 0s per second.
 		<button id="addButton" style="display:none" onclick="addDigits()">Add your digits to boost your production.<br>Gain <div id="plusesToBeGained">1</div> +s.</div></button>
 		<button id="digitsTabButton" onclick="switchTab('digits')">Digits</button>
+		<button id="optionsTabButton" onclick="switchTab('options')">Options</button>
 		<button id="additionTabButton" style="display:none" onclick="switchTab('addition')">Addition</button>
 		<div id="digits">
 			<table>
@@ -111,6 +152,12 @@
 					<td><button id="d0button" onclick="buyDigit(0)">Cost: <div id="d0costDisplay">10</div></button></td>
 				</tr>
 			</table>
+		</div>
+		<div id="options" style="display:none">
+			<button onclick="save()">Save</button>
+			<button onclick="importSave()">import</button>
+			<button onclick="exportSave()">Export</button>
+			<span id="exportInfo" style="display:none">Here is your export save:<input id="exportSave"></input></span>
 		</div>
 		<div style="display:none" id="addition">
 			<p>You have <div id="plusesDisplay">0</div> +s.
