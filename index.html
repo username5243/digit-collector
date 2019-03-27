@@ -90,7 +90,32 @@
 			}
 		}
 
-		function save() {
+		function hardReset() {
+			if(confirm("Are you sure you want to hard reset? This will erase all your progress!")) {
+				player = {
+					zeroes:10,
+					zps:0,
+					d0:{
+						amount:0,
+						cost:10,
+						mult:1,
+						upgradeCost:1
+					},
+				pluses:0
+				}
+				update("zeroesDisplay",player.zeroes);
+				update("zpsDisplay",player.zps);
+				update("d0amountDisplay",player.d0.amount);
+				update("d0costDisplay",player.d0.cost);
+				update("d0multDisplay",player.d0.mult);
+				update("d0upgradeCostDisplay",player.d0.upgradeCost);
+				update("plusesDisplay",player.pluses);
+			hideElement("addButton");
+			hideElement("additionTabButton");
+			}
+		}
+
+			function save() {
 			localStorage.setItem('DCSave',btoa(JSON.stringify(player)))
 		}
 
@@ -110,7 +135,7 @@
 				update("d0amountDisplay",player.d0.amount);
 				update("d0costDisplay",player.d0.cost);
 				update("d0multDisplay",player.d0.mult);
-				update("d0upgradeCostDisplayDisplay",player.d0.upgradeCost);
+				update("d0upgradeCostDisplay",player.d0.upgradeCost);
 				update("plusesDisplay",player.pluses);
 			} catch (e) {
 				console.log('Your save failed to load: '+e)
@@ -157,6 +182,7 @@
 			<button onclick="save()">Save</button>
 			<button onclick="importSave()">import</button>
 			<button onclick="exportSave()">Export</button>
+			<button onclick="hardReset()">Reset the game</button>
 			<span id="exportInfo" style="display:none">Here is your export save:<input id="exportSave"></input></span>
 		</div>
 		<div style="display:none" id="addition">
