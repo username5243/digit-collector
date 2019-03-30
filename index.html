@@ -40,8 +40,7 @@
 			player.d0.cost = player.d0.cost*2;
 			player.d0.amount = player.d0.amount+1;
 			player.zps = player.d0.amount*player.d0.mult;
-			update("zeroesDisplay",player.zeroes);
-			update("zpsDisplay",player.zps);
+			update("0sDisplay",player.zeroes);
 			update("d0amountDisplay",player.d0.amount);
 			update("d0costDisplay",player.d0.cost);
 		}
@@ -60,8 +59,7 @@
 			},
 			pluses:player.pluses+Math.floor(Math.pow(oldZeroes/1000,1/3))
 			}
-			update("zeroesDisplay",player.zeroes);
-			update("zpsDisplay",player.zps);
+			update("0Display",player.zeroes);
 			update("d0amountDisplay",player.d0.amount);
 			update("d0costDisplay",player.d0.cost);
 		update("plusesDisplay",player.pluses);
@@ -82,7 +80,7 @@
 
 		function tick(t) {
 			player.zeroes = player.zeroes+player.zps*t;
-			update("zeroesDisplay",Math.floor(player.zeroes));
+			update("0sDisplay",Math.floor(player.zeroes));
 		if(player.zeroes < 1000) hideElement("addButton")
 		if(player.zeroes >= 1000) {
 			showElement("addButton");
@@ -103,8 +101,7 @@
 					},
 				pluses:0
 				}
-				update("zeroesDisplay",player.zeroes);
-				update("zpsDisplay",player.zps);
+				update("0sDisplay",player.zeroes);
 				update("d0amountDisplay",player.d0.amount);
 				update("d0costDisplay",player.d0.cost);
 				update("d0multDisplay",player.d0.mult);
@@ -130,8 +127,7 @@
 				if(player.d0.mult===undefined) player.d0.mult = 1;
 				if(player.d0.upgradeCost===undefined) player.d0.upgradeCost = 1;
 				if(player.pluses===undefined) player.pluses = 0;
-				update("zeroesDisplay",player.zeroes);
-				update("zpsDisplay",player.zps);
+				update("0sDisplay",player.zeroes);
 				update("d0amountDisplay",player.d0.amount);
 				update("d0costDisplay",player.d0.cost);
 				update("d0multDisplay",player.d0.mult);
@@ -163,18 +159,77 @@
 		</script>
 	</head>
 	<body onload="init()">
-		<p>You have <div id="zeroesDisplay">10</div> 0s.
-		<p>You are getting <div id="zpsDisplay">0</div> 0s per second.
-		<button id="addButton" style="display:none" onclick="addDigits()">Add your digits to boost your production.<br>Gain <div id="plusesToBeGained">1</div> +s.</div></button>
 		<button id="digitsTabButton" onclick="switchTab('digits')">Digits</button>
 		<button id="optionsTabButton" onclick="switchTab('options')">Options</button>
 		<button id="additionTabButton" style="display:none" onclick="switchTab('addition')">Addition</button>
+		<button id="addButton" style="display:none" onclick="addDigits()">Add your digits to boost your production.<br>Gain <div id="plusesToBeGained">1</div> +s.</div></button>
 		<div id="digits">
 			<table>
+				<tr>
+					<th>Number</th>
+					<th>Amount of number</th>
+					<th>Amount of digit</th>
+					<th>Cost of next digit</th>
+				</tr>
 				<tr id="d0row">
-					<td>Digit 0</td>
+					<td>0</td>
+					<td><div id="0sDisplay">10</div></td>
 					<td><div id="d0amountDisplay">0</div></td>
 					<td><button id="d0button" onclick="buyDigit(0)">Cost: <div id="d0costDisplay">10</div></button></td>
+				</tr>
+				<tr id="d1row">
+					<td>1</td>
+					<td><div id="1sDisplay">10</div></td>
+					<td><div id="d1amountDisplay">0</div></td>
+					<td><button id="d1button" onclick="buyDigit(1)">Cost: <div id="d1costDisplay">10</div></button></td>
+				</tr>
+				<tr id="d2row">
+					<td>2</td>
+					<td><div id="2sDisplay">10</div></td>
+					<td><div id="d2amountDisplay">0</div></td>
+					<td><button id="d2button" onclick="buyDigit(2)">Cost: <div id="d2costDisplay">10</div></button></td>
+				</tr>
+				<tr id="d3row">
+					<td>3</td>
+					<td><div id="3sDisplay">10</div></td>
+					<td><div id="d3amountDisplay">0</div></td>
+					<td><button id="d3button" onclick="buyDigit(3)">Cost: <div id="d3costDisplay">10</div></button></td>
+				</tr>
+				<tr id="d4row">
+					<td>4</td>
+					<td><div id="4sDisplay">10</div></td>
+					<td><div id="d4amountDisplay">0</div></td>
+					<td><button id="d4button" onclick="buyDigit(4)">Cost: <div id="d4costDisplay">10</div></button></td>
+				</tr>
+				<tr id="d5row">
+					<td>5</td>
+					<td><div id="5sDisplay">10</div></td>
+					<td><div id="d5amountDisplay">0</div></td>
+					<td><button id="d5button" onclick="buyDigit(5)">Cost: <div id="d5costDisplay">10</div></button></td>
+				</tr>
+				<tr id="d6row">
+					<td>6</td>
+					<td><div id="6sDisplay">10</div></td>
+					<td><div id="d6amountDisplay">0</div></td>
+					<td><button id="d6button" onclick="buyDigit(6)">Cost: <div id="d6costDisplay">10</div></button></td>
+				</tr>
+				<tr id="d7row">
+					<td>7</td>
+					<td><div id="7sDisplay">10</div></td>
+					<td><div id="d7amountDisplay">0</div></td>
+					<td><button id="d7button" onclick="buyDigit(7)">Cost: <div id="d7costDisplay">10</div></button></td>
+				</tr>
+				<tr id="d8row">
+					<td>8</td>
+					<td><div id="8sDisplay">10</div></td>
+					<td><div id="d8amountDisplay">0</div></td>
+					<td><button id="d8button" onclick="buyDigit(8)">Cost: <div id="d8costDisplay">10</div></button></td>
+				</tr>
+				<tr id="d9row">
+					<td>9</td>
+					<td><div id="9sDisplay">10</div></td>
+					<td><div id="d9amountDisplay">0</div></td>
+					<td><button id="d9button" onclick="buyDigit(9)">Cost: <div id="d9costDisplay">10</div></button></td>
 				</tr>
 			</table>
 		</div>
@@ -186,8 +241,23 @@
 			<span id="exportInfo" style="display:none">Here is your export save:<input id="exportSave"></input></span>
 		</div>
 		<div style="display:none" id="addition">
-			<p>You have <div id="plusesDisplay">0</div> +s.
-			<button id="d0UpgradeButton" onclick="upgradeDigit(0)">Double digit 0 production.<br>Current bonus: x<div id="d0multDisplay">1</div>.<br>Cost: <div id="d0UpgradeCostDisplay">1</div> +s.</button>
+			<p>You have <div id="plusesDisplay">0</div> pluses.
+			<table>
+				<tr>
+					<button id="d0UpgradeButton" onclick="upgradeDigit(0)">Double digit 0 production.<br>Current bonus: x<div id="d0multDisplay">1</div>.<br>Cost: <div id="d0UpgradeCostDisplay">1</div> pluses.</button>
+					<button id="d1UpgradeButton" onclick="upgradeDigit(1)">Double digit 1 production.<br>Current bonus: x<div id="d1multDisplay">0.5</div>.<br>Cost: <div id="d1UpgradeCostDisplay">4</div> pluses.</button>
+					<button id="d2UpgradeButton" onclick="upgradeDigit(2)">Double digit 2 production.<br>Current bonus: x<div id="d2multDisplay">0.25</div>.<br>Cost: <div id="d2UpgradeCostDisplay">4</div> pluses.</button>
+					<button id="d3UpgradeButton" onclick="upgradeDigit(3)">Double digit 3 production.<br>Current bonus: x<div id="d3multDisplay">0.125</div>.<br>Cost: <div id="d3UpgradeCostDisplay">4</div> pluses.</button>
+					<button id="d4UpgradeButton" onclick="upgradeDigit(4)">Double digit 4 production.<br>Current bonus: x<div id="d4multDisplay">0.063</div>.<br>Cost: <div id="d4UpgradeCostDisplay">4</div> pluses.</button>
+					<button id="d5UpgradeButton" onclick="upgradeDigit(5)">Double digit 5 production.<br>Current bonus: x<div id="d5multDisplay">0.031</div>.<br>Cost: <div id="d5UpgradeCostDisplay">4</div> pluses.</button>
+					<button id="d6UpgradeButton" onclick="upgradeDigit(6)">Double digit 6 production.<br>Current bonus: x<div id="d6multDisplay">0.016</div>.<br>Cost: <div id="d6UpgradeCostDisplay">4</div> pluses.</button>
+					<button id="d7UpgradeButton" onclick="upgradeDigit(7)">Double digit 7 production.<br>Current bonus: x<div id="d7multDisplay">0.008</div>.<br>Cost: <div id="d7UpgradeCostDisplay">4</div> pluses.</button>
+					<button id="d8UpgradeButton" onclick="upgradeDigit(8)">Double digit 8 production.<br>Current bonus: x<div id="d8multDisplay">0.004</div>.<br>Cost: <div id="d8UpgradeCostDisplay">4</div> pluses.</button>
+					<button id="d9UpgradeButton" onclick="upgradeDigit(9)">Double digit 9 production.<br>Current bonus: x<div id="d9multDisplay">0.002</div>.<br>Cost: <div id="d9UpgradeCostDisplay">4</div> pluses.</button>
+				</tr>
+			</table>
+			<p>You have done <div id="digitShiftsDisplay">0</div> digit shifts.>br>
+			<button id="digitShiftButton" onclick="digitShift()">Unlock digit <div id="nextDigitDisplay">1</div>.<br>Cost: <div id="digitShiftCostDisplay">4</div> pluses.</button>
 		</div>
 <a href="https://discord.gg/RR2kv5">Discord</a>
 	</body>
