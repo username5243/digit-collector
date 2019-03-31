@@ -22,97 +22,130 @@
 			tab=tabName
 		}
 
-		var player = {
-			zeroes:10,
-			zps:0,
-			d0:{
-				amount:0,
-				cost:10,
-				mult:1,
-				upgradeCost:1
-			},
-		pluses:0
+		var player = { // Anythig you want to be saved
+			numbers:[10,10,10,10,10,10,10,10,10,10], 
+			nps:[0,0,0,0,0,0,0,0,0,0],
+			digitAmounts:[0,0,0,0,0,0,0,0,0,0],
+			digitCosts:[10,10,10,10,10,10,10,10,10,10],
+			digitMults:[1,0.5,0.25,0.125,0.0625,0.03125,0.015625,0.0078125,0.00390625,0.001953125],
+			digitUpgradeCosts:[1,16,128,1024,8192,65536,524288,4194304,33554432,268435456],
+			pluses:0,
+			digitShifts:0,
+			nextDigit:1,
+			digitShiftCost:4
 		}
 
 		function buyDigit(i) {
-			if (player.d0.cost > player.zeroes) return 0; // can't buy!
-			player.zeroes -= player.d0.cost;
-			player.d0.cost = player.d0.cost*2;
-			player.d0.amount = player.d0.amount+1;
-			player.zps = player.d0.amount*player.d0.mult;
-			update("0sDisplay",player.zeroes);
-			update("d0amountDisplay",player.d0.amount);
-			update("d0costDisplay",player.d0.cost);
+			if (player.digitCosts[i] > player.numbers[i]) return 0; // can't buy the digi - function ends here
+			player.numbers[i] -= player.digitCosts[i]; // subtract the cost
+			player.digitCosts[i] = player.digitCosts[i]*2; // make the next digit cost more
+			player.digitAmounts[i]++; // one more digit
+			player.nps[i] = player.digitAmounts[i]*player.digitMults[i]; // this will be how many numbers we get per tick
+			update(i+"sDisplay",player.numbers[i]);
+			update("d"+i+"amountDisplay",player.digitAmounts[i]);
+			update("d"+i+"costDisplay",player.digitCosts[i]);
+		}
+
+		function getPluses() { // code to determine how many pluses we should get when adding digits
+			var temp = 1; // storage variable
+			for(var i=0; i<10; i++) {
+				temp = temp*(1+Math.pow(player.digits[i]/1000,1/3))
+			}
+			return Math.floor(temp)-1;
 		}
 
 		function addDigits() {
 			showElement("additionTabButton")
-			var oldZeroes = player.zeroes; // temporary value for zeroes pre-prestige
+			var oldNumbers = player.numbers; // temporary value for numbers pre-prestige
+			var tempPluses = getPluses(); //temporary value for pluses to be gained
 			player = {
-				zeroes:10,
-				zps:0,
-				d0:{
-					amount:0,
-					cost:10,
-					mult:player.d0.mult,
-					upgradeCost:player.d0.upgradeCost
-			},
-			pluses:player.pluses+Math.floor(Math.pow(oldZeroes/1000,1/3))
+				numbers:[10,10,10,10,10,10,10,10,10,10], 
+				nps:[0,0,0,0,0,0,0,0,0,0],
+				digitAmounts:[0,0,0,0,0,0,0,0,0,0],
+				digitCosts:[10,10,10,10,10,10,10,10,10,10],
+				digitMults:player.digitMults,
+				digitUpgradeCosts:player.digitUpgradeCosts,
+				pluses:player.pluses+tempPluses,
+				digitShifts:player.digitShifts,
+				nextDigit:player.nextDigit,
+				digitShiftCost:player.digitShiftCost
 			}
-			update("0Display",player.zeroes);
-			update("d0amountDisplay",player.d0.amount);
-			update("d0costDisplay",player.d0.cost);
+			for(var i=0; i<10; i++) {
+				update(i+"sDisplay",player.numbers[i]);
+				update("d"+i+"amountDisplay",player.digitAmounts[i]);
+			update("d"+i+"costDisplay",player.digitCosts[i]);
 		update("plusesDisplay",player.pluses);
-		hideElement("addButton")
+			}
+			hideElement("addButton")
 		}
 
 		function upgradeDigit(i) {
-			if(player.d0.upgradeCost > player.pluses) return 0; // Can't buy
-			player.pluses = player.pluses-player.d0.upgradeCost;
-			player.d0.mult = player.d0.mult*2;
-			player.d0.upgradeCost = player.d0.upgradeCost*2;
-			player.zps = player.zps*2;
+			if(player.digitUpgradeCosts[i] > player.pluses) return 0; // Can't buy
+			player.pluses -= player.digitUpgradeCosts[i];
+			player.digitMults[i] = player.digitMults[i]*2;
+			player.digitUpgradeCosts[i] = player.digitUpgradeCosts[i]*Math.pow(2,i+1);
+			player.nps[i] = player.nps[i]*2;
 			update("plusesDisplay",player.pluses);
-			update("d0UpgradeCostDisplay",player.d0.upgradeCost);
-			update("d0multDisplay",player.d0.mult);
-			update("zpsDisplay",player.zps);
+			update("d"+i+"UpgradeCostDisplay",player.digitUpgradeCosts[i]);
+			update("d"+i+"multDisplay",player.digitMults[i]);
+		}
+
+		function digitShift() {
+			if(player.digitShiftCost > player.pluses) return 0; // don't have enough
+			player.digitShifts++;
+			player.digitShiftCost = player.digitShiftCost*4;
+			showelement("d"+player.nextDigit+"row");
+			showElement("d"+player.nextDigit+"UpgradeButton");
+			player.nextDigit++;
+			if(player.nextDigit >= 10) hideElement("digitShiftButton"); // 9 is the last digit shift
+			update("digitShiftsDisplay",player.digitShifts);
+			update("nextDigitDisplay",player.nextDigit);
+			update("digitShiftCostDisplay",player.digitShiftCost);
 		}
 
 		function tick(t) {
-			player.zeroes = player.zeroes+player.zps*t;
-			update("0sDisplay",Math.floor(player.zeroes));
-		if(player.zeroes < 1000) hideElement("addButton")
-		if(player.zeroes >= 1000) {
+			for(var i=0; i<10; i++) {
+player.numbers[i] = player.numbers[i]+player.nps[i]*t;
+			update(i+"sDisplay",Math.floor(player.numbers[i]));
+		}
+		if(player.numbers[0] < 1000) hideElement("addButton")
+		if(player.numbers[0] >= 1000) {
 			showElement("addButton");
-			update("plusesToBeGained",Math.floor(Math.pow(player.zeroes/1000,1/3)));
+			update("plusesToBeGained",getPluses());
 			}
 		}
 
 		function hardReset() {
 			if(confirm("Are you sure you want to hard reset? This will erase all your progress!")) {
 				player = {
-					zeroes:10,
-					zps:0,
-					d0:{
-						amount:0,
-						cost:10,
-						mult:1,
-						upgradeCost:1
-					},
-				pluses:0
+					numbers:[10,10,10,10,10,10,10,10,10,10], 
+					nps:[0,0,0,0,0,0,0,0,0,0],
+					digitAmounts:[0,0,0,0,0,0,0,0,0,0],
+					digitCosts:[10,10,10,10,10,10,10,10,10,10],
+					digitMults:[1,0.5,0.25,0.125,0.0625,0.03125,0.015625,0.0078125,0.00390625,0.001953125],
+					digitUpgradeCosts:[1,16,128,1024,8192,65536,524288,4194304,33554432,268435456],
+					pluses:0,
+					digitShifts:0,
+					nextDigit:1,
+					digitShiftCost:4
 				}
-				update("0sDisplay",player.zeroes);
-				update("d0amountDisplay",player.d0.amount);
-				update("d0costDisplay",player.d0.cost);
-				update("d0multDisplay",player.d0.mult);
-				update("d0upgradeCostDisplay",player.d0.upgradeCost);
+				for(var i=0;i<10;i++) {
+					update(i+"sDisplay",player.numbers[i]);
+					update("d"+i+"amountDisplay",player.digitAmounts[i]);
+					update("d"+i+"costDisplay",player.digitCosts[i]);
+				update("d"+i+"multDisplay",player.digitMults[i]);
+					update("d"+i+"upgradeCostDisplay",player.digitUpgradeCosts[i]);
+				}
 				update("plusesDisplay",player.pluses);
-			hideElement("addButton");
-			hideElement("additionTabButton");
+				update("digitShiftsDisplay",player.digitShifts);
+				update("nextDigitDisplay",player.nextdigit);
+				update("digitShiftCostDisplay",player.digitShiftcost);
+				hideElement("addButton");
+				hideElement("additionTabButton");
 			}
 		}
 
-			function save() {
+		function save() {
 			localStorage.setItem('DCSave',btoa(JSON.stringify(player)))
 		}
 
@@ -120,19 +153,27 @@
 			try {
 				player=JSON.parse(atob(save))
 				
-				if(player.zeroes===undefined) player.zeroes = 10;
-				if(player.zps===undefined) player.zps = 0;
-				if(player.d0.amount===undefined) player.d0.amount = 0;
-				if(player.d0.cost===undefined) player.d0.cost = 10;
-				if(player.d0.mult===undefined) player.d0.mult = 1;
-				if(player.d0.upgradeCost===undefined) player.d0.upgradeCost = 1;
+				if(player.numbers===undefined) player.numbers = [player.zeroes,10,10,10,10,10,10,10,10,10];
+				if(player.nps===undefined) player.nps = [player.zps,0,0,0,0,0,0,0,0,0];
+				if(player.digitAmounts===undefined) player.digitAmounts = [player.d0.amount,0,0,0,0,0,0,0,0,0];
+				if(player.digitCosts===undefined) player.digitCosts = [player.d0.cost,0,0,0,0,0,0,0,0,0];
+				if(player.digitMults===undefined) player.digitMults = [player.d0.mult,0.5,0.25,0.125,0.0625,0.03125,0.015625,0.0078125,0.00390625,0.001953125];
+				if(player.digitUpgradeCosts===undefined) player.digitUpgradeCost = [player.d0.upgradeCost,16,128,1024,8192,65536,524288,4194304,33554432,268435456];
 				if(player.pluses===undefined) player.pluses = 0;
-				update("0sDisplay",player.zeroes);
-				update("d0amountDisplay",player.d0.amount);
-				update("d0costDisplay",player.d0.cost);
-				update("d0multDisplay",player.d0.mult);
-				update("d0upgradeCostDisplay",player.d0.upgradeCost);
+				if(player.digitShifts===undefined) player.digitShifts = 0;
+				if(player.nextDigit===undefined) player.nextDigit = 1;
+				if(player.digitShiftCost===undefined) player.digitShiftCost = 4;
+				for(var i=0;i<10;i++) {
+					update(i+"sDisplay",player.numbers[i]);
+					update("d"+i+"amountDisplay",player.digitAmounts[i]);
+					update("d"+i+"costDisplay",player.digitCosts[i]);
+				update("d"+i+"multDisplay",player.digitMults[i]);
+					update("d"+i+"upgradeCostDisplay",player.digitUpgradeCosts[i]);
+				}
 				update("plusesDisplay",player.pluses);
+				update("digitShiftsDisplay",player.digitShifts);
+				update("nextDigitDisplay",player.nextdigit);
+				update("digitShiftCostDisplay",player.digitShiftcost);
 			} catch (e) {
 				console.log('Your save failed to load: '+e)
 			}
@@ -177,55 +218,55 @@
 					<td><div id="d0amountDisplay">0</div></td>
 					<td><button id="d0button" onclick="buyDigit(0)">Cost: <div id="d0costDisplay">10</div></button></td>
 				</tr>
-				<tr id="d1row">
+				<tr id="d1row" style="display:none">
 					<td>1</td>
 					<td><div id="1sDisplay">10</div></td>
 					<td><div id="d1amountDisplay">0</div></td>
 					<td><button id="d1button" onclick="buyDigit(1)">Cost: <div id="d1costDisplay">10</div></button></td>
 				</tr>
-				<tr id="d2row">
+				<tr id="d2row" style="display:none">
 					<td>2</td>
 					<td><div id="2sDisplay">10</div></td>
 					<td><div id="d2amountDisplay">0</div></td>
 					<td><button id="d2button" onclick="buyDigit(2)">Cost: <div id="d2costDisplay">10</div></button></td>
 				</tr>
-				<tr id="d3row">
+				<tr id="d3row" style="display:none">
 					<td>3</td>
 					<td><div id="3sDisplay">10</div></td>
 					<td><div id="d3amountDisplay">0</div></td>
 					<td><button id="d3button" onclick="buyDigit(3)">Cost: <div id="d3costDisplay">10</div></button></td>
 				</tr>
-				<tr id="d4row">
+				<tr id="d4row" style="display:none">
 					<td>4</td>
 					<td><div id="4sDisplay">10</div></td>
 					<td><div id="d4amountDisplay">0</div></td>
 					<td><button id="d4button" onclick="buyDigit(4)">Cost: <div id="d4costDisplay">10</div></button></td>
 				</tr>
-				<tr id="d5row">
+				<tr id="d5row" style="display:none">
 					<td>5</td>
 					<td><div id="5sDisplay">10</div></td>
 					<td><div id="d5amountDisplay">0</div></td>
 					<td><button id="d5button" onclick="buyDigit(5)">Cost: <div id="d5costDisplay">10</div></button></td>
 				</tr>
-				<tr id="d6row">
+				<tr id="d6row" style="display:none">
 					<td>6</td>
 					<td><div id="6sDisplay">10</div></td>
 					<td><div id="d6amountDisplay">0</div></td>
 					<td><button id="d6button" onclick="buyDigit(6)">Cost: <div id="d6costDisplay">10</div></button></td>
 				</tr>
-				<tr id="d7row">
+				<tr id="d7row" style="display:none">
 					<td>7</td>
 					<td><div id="7sDisplay">10</div></td>
 					<td><div id="d7amountDisplay">0</div></td>
 					<td><button id="d7button" onclick="buyDigit(7)">Cost: <div id="d7costDisplay">10</div></button></td>
 				</tr>
-				<tr id="d8row">
+				<tr id="d8row" style="display:none">
 					<td>8</td>
 					<td><div id="8sDisplay">10</div></td>
 					<td><div id="d8amountDisplay">0</div></td>
 					<td><button id="d8button" onclick="buyDigit(8)">Cost: <div id="d8costDisplay">10</div></button></td>
 				</tr>
-				<tr id="d9row">
+				<tr id="d9row" style="display:none">
 					<td>9</td>
 					<td><div id="9sDisplay">10</div></td>
 					<td><div id="d9amountDisplay">0</div></td>
@@ -244,17 +285,17 @@
 			<p>You have <div id="plusesDisplay">0</div> pluses.
 			<table>
 				<tr>
-					<button id="d0UpgradeButton" onclick="upgradeDigit(0)">Double digit 0 production.<br>Current bonus: x<div id="d0multDisplay">1</div>.<br>Cost: <div id="d0UpgradeCostDisplay">1</div> pluses.</button>
-					<button id="d1UpgradeButton" onclick="upgradeDigit(1)">Double digit 1 production.<br>Current bonus: x<div id="d1multDisplay">0.5</div>.<br>Cost: <div id="d1UpgradeCostDisplay">4</div> pluses.</button>
-					<button id="d2UpgradeButton" onclick="upgradeDigit(2)">Double digit 2 production.<br>Current bonus: x<div id="d2multDisplay">0.25</div>.<br>Cost: <div id="d2UpgradeCostDisplay">4</div> pluses.</button>
-					<button id="d3UpgradeButton" onclick="upgradeDigit(3)">Double digit 3 production.<br>Current bonus: x<div id="d3multDisplay">0.125</div>.<br>Cost: <div id="d3UpgradeCostDisplay">4</div> pluses.</button>
-					<button id="d4UpgradeButton" onclick="upgradeDigit(4)">Double digit 4 production.<br>Current bonus: x<div id="d4multDisplay">0.063</div>.<br>Cost: <div id="d4UpgradeCostDisplay">4</div> pluses.</button>
-					<button id="d5UpgradeButton" onclick="upgradeDigit(5)">Double digit 5 production.<br>Current bonus: x<div id="d5multDisplay">0.031</div>.<br>Cost: <div id="d5UpgradeCostDisplay">4</div> pluses.</button>
-					<button id="d6UpgradeButton" onclick="upgradeDigit(6)">Double digit 6 production.<br>Current bonus: x<div id="d6multDisplay">0.016</div>.<br>Cost: <div id="d6UpgradeCostDisplay">4</div> pluses.</button>
-					<button id="d7UpgradeButton" onclick="upgradeDigit(7)">Double digit 7 production.<br>Current bonus: x<div id="d7multDisplay">0.008</div>.<br>Cost: <div id="d7UpgradeCostDisplay">4</div> pluses.</button>
-					<button id="d8UpgradeButton" onclick="upgradeDigit(8)">Double digit 8 production.<br>Current bonus: x<div id="d8multDisplay">0.004</div>.<br>Cost: <div id="d8UpgradeCostDisplay">4</div> pluses.</button>
-					<button id="d9UpgradeButton" onclick="upgradeDigit(9)">Double digit 9 production.<br>Current bonus: x<div id="d9multDisplay">0.002</div>.<br>Cost: <div id="d9UpgradeCostDisplay">4</div> pluses.</button>
-				</tr>
+					<td><button id="d0UpgradeButton" onclick="upgradeDigit(0)">Double digit 0 production.<br>Current bonus: x<div id="d0multDisplay">1</div>.<br>Cost: <div id="d0UpgradeCostDisplay">1</div> pluses.</button></td>
+					<td><button id="d1UpgradeButton" onclick="upgradeDigit(1) style="display:none">Double digit 1 production.<br>Current bonus: x<div id="d1multDisplay">0.5</div>.<br>Cost: <div id="d1UpgradeCostDisplay">16</div> pluses.</button></td>
+					<td><button id="d2UpgradeButton" onclick="upgradeDigit(2)" style="display:none">Double digit 2 production.<br>Current bonus: x<div id="d2multDisplay">0.25</div>.<br>Cost: <div id="d2UpgradeCostDisplay">128</div> pluses.</button></td>
+					<td><button id="d3UpgradeButton" onclick="upgradeDigit(3)" style="display:none">Double digit 3 production.<br>Current bonus: x<div id="d3multDisplay">0.125</div>.<br>Cost: <div id="d3UpgradeCostDisplay">1024</div> pluses.</button></td>
+					<td><button id="d4UpgradeButton" onclick="upgradeDigit(4)" style="display:none">Double digit 4 production.<br>Current bonus: x<div id="d4multDisplay">0.063</div>.<br>Cost: <div id="d4UpgradeCostDisplay">8192</div> pluses.</button></td>
+					<td><button id="d5UpgradeButton" onclick="upgradeDigit(5)" style="display:none">Double digit 5 production.<br>Current bonus: x<div id="d5multDisplay">0.031</div>.<br>Cost: <div id="d5UpgradeCostDisplay">65536</div> pluses.</button></td>
+					<td><button id="d6UpgradeButton" onclick="upgradeDigit(6)" style="display:none">Double digit 6 production.<br>Current bonus: x<div id="d6multDisplay">0.016</div>.<br>Cost: <div id="d6UpgradeCostDisplay">524288</div> pluses.</button></td>
+					<td><button id="d7UpgradeButton" onclick="upgradeDigit(7)" style="display:none">Double digit 7 production.<br>Current bonus: x<div id="d7multDisplay">0.008</div>.<br>Cost: <div id="d7UpgradeCostDisplay">4194304</div> pluses.</button></td>
+					<td><button id="d8UpgradeButton" onclick="upgradeDigit(8)" style=display:none">Double digit 8 production.<br>Current bonus: x<div id="d8multDisplay">0.004</div>.<br>Cost: <div id="d8UpgradeCostDisplay">33554432</div> pluses.</button></td>
+					<td><button id="d9UpgradeButton" onclick="upgradeDigit(9)" style="display:none">Double digit 9 production.<br>Current bonus: x<div id="d9multDisplay">0.002</div>.<br>Cost: <div id="d9UpgradeCostDisplay">268435456</div> pluses.</button>
+				</tr></td>
 			</table>
 			<p>You have done <div id="digitShiftsDisplay">0</div> digit shifts.<br>
 			<button id="digitShiftButton" onclick="digitShift()">Unlock digit <div id="nextDigitDisplay">1</div>.<br>Cost: <div id="digitShiftCostDisplay">4</div> pluses.</button>
