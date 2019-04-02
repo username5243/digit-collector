@@ -94,7 +94,7 @@
 			if(player.digitShiftCost > player.pluses) return 0; // don't have enough
 			player.digitShifts++;
 			player.digitShiftCost = player.digitShiftCost*4;
-			showelement("d"+player.nextDigit+"row");
+			showElement("d"+player.nextDigit+"row");
 			showElement("d"+player.nextDigit+"UpgradeButton");
 			player.nextDigit++;
 			if(player.nextDigit >= 10) hideElement("digitShiftButton"); // 9 is the last digit shift
