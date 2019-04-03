@@ -6,8 +6,8 @@
 			document.getElementById(set).innerHTML=get
 		}
 
-		function showElement(elementID) {
-			document.getElementById(elementID).style.display="inline-block"
+		function showElement(elementID, className="inline-block") {
+			document.getElementById(elementID).style.display=className
 		}
 
 		function hideElement(elementID) {
@@ -94,7 +94,7 @@
 			if(player.digitShiftCost > player.pluses) return 0; // don't have enough
 			player.digitShifts++;
 			player.digitShiftCost = player.digitShiftCost*4;
-			showElement("d"+player.nextDigit+"row");
+			showElement("d"+player.nextDigit+"row", "table-row");
 			showElement("d"+player.nextDigit+"UpgradeButton");
 			player.nextDigit++;
 			if(player.nextDigit >= 10) hideElement("digitShiftButton"); // 9 is the last digit shift
@@ -105,12 +105,12 @@
 
 		function tick(t) {
 			for(var i=0; i<10; i++) {
-player.numbers[i] = player.numbers[i]+player.nps[i]*t;
-		}
-		if(player.numbers[0] < 1000) hideElement("addButton")
-		if(player.numbers[0] >= 1000) {
-			showElement("addButton");
-			update("plusesToBeGained",getPluses());
+				player.numbers[i] = player.numbers[i]+player.nps[i]*t;
+			}
+			if(player.numbers[0] < 1000) hideElement("addButton")
+			if(player.numbers[0] >= 1000) {
+				showElement("addButton");
+				update("plusesToBeGained",getPluses());
 			}
 			if(player.pluses > 0 || player.digitMults[0] > 1) showElement("additionTabButton");
 			// These lines are here to enforce the display to match the stored variable - they should be catered for by other functions, but this is insurance just in case.
@@ -118,7 +118,7 @@ player.numbers[i] = player.numbers[i]+player.nps[i]*t;
 				update(i+"sDisplay",Math.floor(player.numbers[i]));
 				update("d"+i+"amountDisplay",player.digitAmounts[i]);
 				update("d"+i+"costDisplay",player.digitCosts[i]);
-			update("d"+i+"multDisplay",player.digitMults[i]);
+				update("d"+i+"multDisplay",player.digitMults[i]);
 				update("d"+i+"UpgradeCostDisplay",player.digitUpgradeCosts[i]);
 			}
 			update("plusesDisplay",player.pluses);
@@ -145,8 +145,10 @@ player.numbers[i] = player.numbers[i]+player.nps[i]*t;
 					update(i+"sDisplay",player.numbers[i]);
 					update("d"+i+"amountDisplay",player.digitAmounts[i]);
 					update("d"+i+"costDisplay",player.digitCosts[i]);
-				update("d"+i+"multDisplay",player.digitMults[i]);
+					update("d"+i+"multDisplay",player.digitMults[i]);
 					update("d"+i+"UpgradeCostDisplay",player.digitUpgradeCosts[i]);
+					hideElement("d"+i+"row");
+					hideElement("d"+i+"UpgradeButton");
 				}
 				update("plusesDisplay",player.pluses);
 				update("digitShiftsDisplay",player.digitShifts);
@@ -179,8 +181,10 @@ player.numbers[i] = player.numbers[i]+player.nps[i]*t;
 					update(i+"sDisplay",Math.floor(player.numbers[i]));
 					update("d"+i+"amountDisplay",player.digitAmounts[i]);
 					update("d"+i+"costDisplay",player.digitCosts[i]);
-				update("d"+i+"multDisplay",player.digitMults[i]);
+					update("d"+i+"multDisplay",player.digitMults[i]);
 					update("d"+i+"UpgradeCostDisplay",player.digitUpgradeCosts[i]);
+					showElement("d"+i+"row", player.digitShifts < i ? "none" : "table-row");
+					showElement("d"+i+"UpgradeButton", player.digitShifts < i ? "none" : null);
 				}
 				update("plusesDisplay",player.pluses);
 				update("digitShiftsDisplay",player.digitShifts);
@@ -188,10 +192,6 @@ player.numbers[i] = player.numbers[i]+player.nps[i]*t;
 				update("digitShiftCostDisplay",player.digitShiftCost);
 				if(player.pluses > 0 || player.digitMults[0] > 1) {
 					showElement("additionTabButton");
-					for(var i=1; i<player.nextDigit; i++) {
-						showElement("d"+i+"row");
-						showElement("d"+i+"UpgradeButton");
-					}
 				}
 			} catch (e) {
 				console.log('Your save failed to load: '+e)
