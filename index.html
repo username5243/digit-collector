@@ -92,6 +92,7 @@
 
 		function digitShift() {
 			if(player.digitShiftCost > player.pluses) return 0; // don't have enough
+			player.pluses -= player.digitShiftCost;
 			player.digitShifts++;
 			player.digitShiftCost = player.digitShiftCost*4;
 			showElement("d"+player.nextDigit+"row", "table-row");
@@ -101,6 +102,7 @@
 			update("digitShiftsDisplay",player.digitShifts);
 			update("nextDigitDisplay",player.nextDigit);
 			update("digitShiftCostDisplay",player.digitShiftCost);
+			update("plusesDisplay",player.pluses);
 		}
 
 		function tick(t) {
