@@ -13,6 +13,20 @@
 		function hideElement(elementID) {
 			document.getElementById(elementID).style.display="none"
 		}
+		
+		function format(num, bonus) {
+			var log = Math.floor(Math.log10(Math.abs(num)))
+			if (log > 3) {
+				var mantissa = num / Math.pow(10, log)
+				if (mantissa > 9.995) {
+					log++
+					mantissa = 1
+				}
+				return mantissa.toFixed(3) + "e" + log
+			}
+			if (bonus && log < 0) return num.toFixed(Math.max(-log, 0))
+			return Math.floor(num)
+		}
 
 		var tab="digits"
 
@@ -41,9 +55,9 @@
 			player.digitCosts[i] = player.digitCosts[i]*2; // make the next digit cost more
 			player.digitAmounts[i]++; // one more digit
 			player.nps[i] = player.digitAmounts[i]*player.digitMults[i]; // this will be how many numbers we get per tick
-			update(i+"sDisplay",player.numbers[i]);
-			update("d"+i+"amountDisplay",player.digitAmounts[i]);
-			update("d"+i+"costDisplay",player.digitCosts[i]);
+			update(i+"sDisplay",format(player.numbers[i]));
+			update("d"+i+"amountDisplay",format(player.digitAmounts[i]));
+			update("d"+i+"costDisplay",format(player.digitCosts[i]));
 		}
 
 		function getPluses() { // code to determine how many pluses we should get when adding digits
@@ -71,11 +85,11 @@
 				digitShiftCost:player.digitShiftCost
 			}
 			for(var i=0; i<10; i++) {
-				update(i+"sDisplay",player.numbers[i]);
-				update("d"+i+"amountDisplay",player.digitAmounts[i]);
-			update("d"+i+"costDisplay",player.digitCosts[i]);
-		update("plusesDisplay",player.pluses);
+				update(i+"sDisplay",10);
+				update("d"+i+"amountDisplay",0);
+				update("d"+i+"costDisplay",10);
 			}
+			update("plusesDisplay",format(player.pluses));
 			hideElement("addButton")
 		}
 
@@ -85,9 +99,9 @@
 			player.digitMults[i] = player.digitMults[i]*2;
 			player.digitUpgradeCosts[i] = player.digitUpgradeCosts[i]*Math.pow(2,i+1);
 			player.nps[i] = player.nps[i]*2;
-			update("plusesDisplay",player.pluses);
-			update("d"+i+"UpgradeCostDisplay",player.digitUpgradeCosts[i]);
-			update("d"+i+"multDisplay",player.digitMults[i]);
+			update("plusesDisplay",format(player.pluses));
+			update("d"+i+"UpgradeCostDisplay",format(player.digitUpgradeCosts[i]));
+			update("d"+i+"multDisplay",format(player.digitMults[i], true));
 		}
 
 		function digitShift() {
@@ -101,8 +115,8 @@
 			if(player.nextDigit >= 10) hideElement("digitShiftButton"); // 9 is the last digit shift
 			update("digitShiftsDisplay",player.digitShifts);
 			update("nextDigitDisplay",player.nextDigit);
-			update("digitShiftCostDisplay",player.digitShiftCost);
-			update("plusesDisplay",player.pluses);
+			update("digitShiftCostDisplay",format(player.digitShiftCost));
+			update("plusesDisplay",format(player.pluses));
 		}
 
 		function tick(t) {
@@ -112,21 +126,19 @@
 			if(player.numbers[0] < 1000) hideElement("addButton")
 			if(player.numbers[0] >= 1000) {
 				showElement("addButton");
-				update("plusesToBeGained",getPluses());
+				update("plusesToBeGained",format(getPluses()));
 			}
 			if(player.pluses > 0 || player.digitMults[0] > 1) showElement("additionTabButton");
 			// These lines are here to enforce the display to match the stored variable - they should be catered for by other functions, but this is insurance just in case.
 			for(var i=0;i<10;i++) {
-				update(i+"sDisplay",Math.floor(player.numbers[i]));
-				update("d"+i+"amountDisplay",player.digitAmounts[i]);
-				update("d"+i+"costDisplay",player.digitCosts[i]);
-				update("d"+i+"multDisplay",player.digitMults[i]);
-				update("d"+i+"UpgradeCostDisplay",player.digitUpgradeCosts[i]);
+				update(i+"sDisplay",format(player.numbers[i]));
+				update("d"+i+"amountDisplay",format(player.digitAmounts[i]));
+				update("d"+i+"costDisplay",format(player.digitCosts[i]));
 			}
-			update("plusesDisplay",player.pluses);
+			update("plusesDisplay",format(player.pluses));
 			update("digitShiftsDisplay",player.digitShifts);
 			update("nextDigitDisplay",player.nextDigit);
-			update("digitShiftCostDisplay",player.digitShiftCost);
+			update("digitShiftCostDisplay",format(player.digitShiftCost));
 		}
 
 		function hardReset() {
@@ -144,20 +156,23 @@
 					digitShiftCost:4
 				}
 				for(var i=0;i<10;i++) {
-					update(i+"sDisplay",player.numbers[i]);
-					update("d"+i+"amountDisplay",player.digitAmounts[i]);
-					update("d"+i+"costDisplay",player.digitCosts[i]);
-					update("d"+i+"multDisplay",player.digitMults[i]);
-					update("d"+i+"UpgradeCostDisplay",player.digitUpgradeCosts[i]);
-					hideElement("d"+i+"row");
-					hideElement("d"+i+"UpgradeButton");
+					update(i+"sDisplay",10);
+					update("d"+i+"amountDisplay",0);
+					update("d"+i+"costDisplay",10);
+					update("d"+i+"multDisplay", format(player.digitMults[i], true));
+					update("d"+i+"UpgradeCostDisplay",format(player.digitUpgradeCosts[i]));
+					if (i>0) {
+						hideElement("d"+i+"row");
+						hideElement("d"+i+"UpgradeButton");
+					}
 				}
-				update("plusesDisplay",player.pluses);
-				update("digitShiftsDisplay",player.digitShifts);
-				update("nextDigitDisplay",player.nextdigit);
-				update("digitShiftCostDisplay",player.digitShiftcost);
+				update("plusesDisplay",0);
+				update("digitShiftsDisplay",0);
+				update("nextDigitDisplay",1);
+				update("digitShiftCostDisplay",4);
 				hideElement("addButton");
 				hideElement("additionTabButton");
+				showElement("digitShiftButton");
 			}
 		}
 
@@ -180,20 +195,21 @@
 				if(player.nextDigit===undefined) player.nextDigit = 1;
 				if(player.digitShiftCost===undefined) player.digitShiftCost = 4;
 				for(var i=0;i<10;i++) {
-					update(i+"sDisplay",Math.floor(player.numbers[i]));
-					update("d"+i+"amountDisplay",player.digitAmounts[i]);
-					update("d"+i+"costDisplay",player.digitCosts[i]);
-					update("d"+i+"multDisplay",player.digitMults[i]);
-					update("d"+i+"UpgradeCostDisplay",player.digitUpgradeCosts[i]);
+					update(i+"sDisplay",format(player.numbers[i]));
+					update("d"+i+"amountDisplay",format(player.digitAmounts[i]));
+					update("d"+i+"costDisplay",format(player.digitCosts[i]));
+					update("d"+i+"multDisplay",format(player.digitMults[i], true));
+					update("d"+i+"UpgradeCostDisplay",format(player.digitUpgradeCosts[i]));
 					showElement("d"+i+"row", player.digitShifts < i ? "none" : "table-row");
 					showElement("d"+i+"UpgradeButton", player.digitShifts < i ? "none" : null);
 				}
-				update("plusesDisplay",player.pluses);
+				update("plusesDisplay",format(player.pluses));
 				update("digitShiftsDisplay",player.digitShifts);
 				update("nextDigitDisplay",player.nextDigit);
-				update("digitShiftCostDisplay",player.digitShiftCost);
+				update("digitShiftCostDisplay",format(player.digitShiftCost));
 				if(player.pluses > 0 || player.digitMults[0] > 1) {
 					showElement("additionTabButton");
+					showElement("digitShiftButton", player.digitShifts < 9 ? null : "none");
 				}
 			} catch (e) {
 				console.log('Your save failed to load: '+e)
