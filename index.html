@@ -153,6 +153,7 @@
 
 		function hardReset() {
 			if(confirm("Are you sure you want to hard reset? This will erase all your progress!")) {
+				localStorage.removeItem("DCSave");
 				resetPlayer(Infinity);
 				location.reload()
 			}
