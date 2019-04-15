@@ -34,6 +34,44 @@
 			return a
 		}
 
+		function abbreviate(i) { // get standard notation abbreviation for the i-th illion. (Currently only works properly to i = 999.)
+		if(i==0) return "K";
+			if(i==1) return "M";
+			if(i==2) return "B";
+			var units = ["","U","Du","T","Qa","Qt","Sx","Sp","O","N"];
+			var tens = ["","Dc","Vg","Tg","Qd","Qi","Se","St","Og","Nn"];
+			var hundreds = ["","Ce","Dn","Tc","Qe","Qu","Sc","Si","Oe","Ne"]
+			var i2 = Math.floor(i/10);
+			var i3 = Math.floor(i2/10);
+			var unit = units[i%10];
+			var ten = tens[i2%10];
+			var hundred = hundreds[i3%10];
+			return unit+ten+hundred;
+		}
+
+		function format(a,n) { // format number a in notation n (see var notationArray for a list of notations
+			a = new Decimal(a); // make it a Decimal, if it isn't already.
+			if (a.lt(10)) return a.toFixed(3);
+			if (a.lt(100)) return a.toFixed(2);
+			if (a.lt(1000)) return a.toFixed(1);
+			var m = Math.round(1000*Math.pow(10,a.log10()-Math.floor(a.log10())))/1000; // mantissa of number, rounded to three decimal places
+			var e = Math.floor(a.log10()); // exponent of number
+			if (m>9.9995) { // would this mantissa cause the value to round up to 10.000? If so, prevent it.
+		m = 1;
+		e++;
+	}
+			if (n==1) return m+"e"+e; // scientific notation
+			if (n==3) return "e"+Math.round(1000*a.log10())/1000; // logarithm notation
+			var e2 = 3*Math.floor(e/3);
+			var m2 = Math.round(1000*m*Math.pow(10,e-e2))/1000; // values for standard and engineering
+			if(n==0) return m2+abbreviate(e2/3-1);
+			if(n==2) return m2+"e"+e2;
+				if(n==4) { // mixed scientific notation
+			if(a.lt(1e33) return format(a,0);
+			else return format(a,1);
+			}
+		}
+
 		var player = { // Anything you want to be saved
 			numbers:decimalArray(10, 10, 1), 
 			nps:decimalArray(10, 0, 0),
@@ -44,7 +82,8 @@
 			pluses:new Decimal(0),
 			digitShifts:0,
 			nextDigit:1,
-			digitShiftCost:new Decimal(4)
+			digitShiftCost:new Decimal(4),
+			notation:0
 		}
 		
 		function resetPlayer(layers) {
@@ -70,9 +109,6 @@
 			player.digitCosts[i] = player.digitCosts[i].multiply(2); // make the next digit cost more
 			player.digitAmounts[i] = player.digitAmounts[i].add(1); // one more digit
 			player.nps[i] = player.digitAmounts[i].multiply(player.digitMults[i]); // this will be how many numbers we get per tick
-			update(i+"sDisplay",player.numbers[i]);
-			update("d"+i+"amountDisplay",player.digitAmounts[i]);
-			update("d"+i+"costDisplay",player.digitCosts[i]);
 		}
 
 		function getPluses() { // code to determine how many pluses we should get when adding digits
@@ -88,13 +124,6 @@
 			
 			player.pluses = player.pluses.add(getPluses()); // give player gained pluses
 			resetPlayer(1) // reset digits
-			
-			for(var i=0; i<10; i++) {
-				update(i+"sDisplay",player.numbers[i]);
-				update("d"+i+"amountDisplay",player.digitAmounts[i]);
-			update("d"+i+"costDisplay",player.digitCosts[i]);
-		update("plusesDisplay",player.pluses);
-			}
 			hideElement("addButton")
 		}
 
@@ -104,9 +133,6 @@
 			player.digitMults[i] = player.digitMults[i].multiply(2);
 			player.digitUpgradeCosts[i] = player.digitUpgradeCosts[i].multiply(Decimal.pow(2,i+1));
 			player.nps[i] = player.nps[i].multiply(2);
-			update("plusesDisplay",player.pluses);
-			update("d"+i+"UpgradeCostDisplay",player.digitUpgradeCosts[i]);
-			update("d"+i+"multDisplay",player.digitMults[i]);
 		}
 
 		function digitShift() {
@@ -117,10 +143,6 @@
 			showElement("d"+player.nextDigit+"row", "table-row");
 			showElement("d"+player.nextDigit+"UpgradeButton");
 			player.nextDigit++;
-			update("digitShiftsDisplay",player.digitShifts);
-			update("nextDigitDisplay",player.nextDigit);
-			update("digitShiftCostDisplay",player.digitShiftCost);
-			update("plusesDisplay",player.pluses);
 		}
 
 		function tick(t) {
@@ -133,21 +155,21 @@
 			if(player.numbers[0].lt(1000)) hideElement("addButton")
 			else {
 				showElement("addButton");
-				update("plusesToBeGained",getPluses());
+				update("plusesToBeGained",format(getPluses()));
 			}
 			if(player.pluses.gt(0) || player.digitMults[0] > 1) showElement("additionTabButton");
-			// These lines are here to enforce the display to match the stored variable - they should be catered for by other functions, but this is insurance just in case.
+			// These lines are here to enforce the display to match the stored variable.
 			for(var i=0;i<10;i++) {
-				update(i+"sDisplay",Math.floor(player.numbers[i]));
-				update("d"+i+"amountDisplay",player.digitAmounts[i]);
-				update("d"+i+"costDisplay",player.digitCosts[i]);
-				update("d"+i+"multDisplay",player.digitMults[i]);
-				update("d"+i+"UpgradeCostDisplay",player.digitUpgradeCosts[i]);
+				update(i+"sDisplay",format(player.numbers[i]));
+				update("d"+i+"amountDisplay",format(player.digitAmounts[i]));
+				update("d"+i+"costDisplay",format(player.digitCosts[i]));
+				update("d"+i+"multDisplay",format(player.digitMults[i]));
+				update("d"+i+"UpgradeCostDisplay",format(player.digitUpgradeCosts[i]));
 			}
-			update("plusesDisplay",player.pluses);
+			update("plusesDisplay",format(player.pluses));
 			update("digitShiftsDisplay",player.digitShifts);
 			update("nextDigitDisplay",player.nextDigit);
-			update("digitShiftCostDisplay",player.digitShiftCost);
+			update("digitShiftCostDisplay",format(player.digitShiftCost));
 			if(player.nextDigit >= 10) hideElement("digitShiftButton"); // 9 is the last digit shift
 		}
 
@@ -158,6 +180,14 @@
 				location.reload()
 			}
 		}
+
+		var notationArray = ["Standard","Scientific","Engineering","Logarithm"]; // list of implemented notations, used by the next function
+
+		function switchNotation() {
+			player.notation++;
+			if(player.notation>notationArray.length-1) player.notation=0;
+			update("notationDisplay",notationArray[game.notation]);
+}
 
 		function save() {
 			localStorage.setItem('DCSave',btoa(JSON.stringify(player)))
@@ -179,7 +209,8 @@
 				if(player.digitShifts===undefined) player.digitShifts = 0;
 				if(player.nextDigit===undefined) player.nextDigit = 1;
 				if(player.digitShiftCost===undefined) player.digitShiftCost = new Decimal(4);
-				if(player.lastUpdate===undefined) player.lastUpdate = Date.now()
+				if(player.lastUpdate===undefined) player.lastUpdate = Date.now();
+				if (player.notation===undefined) player.notation=0; // Yes, you start in standard notation. Deal with it.
 				
 				// Convert save to decimal
 				
@@ -319,6 +350,7 @@
 			<button onclick="importSave()">Import</button>
 			<button onclick="exportSave()">Export</button>
 			<button onclick="hardReset()">Reset the game</button>
+   <button onclick="switchNotation()">Notation: <div id="notationDisplay">Standard</div></button>
 			<span id="exportInfo" style="display:none">Here is your export save:<input id="exportSave"></input></span>
 		</div>
 		<div style="display:none" id="addition">
@@ -326,15 +358,15 @@
 			<table>
 				<tr>
 					<td><button id="d0UpgradeButton" onclick="upgradeDigit(0)">Double digit 0 production.<br>Current bonus: x<span id="d0multDisplay">1</span>.<br>Cost: <span id="d0UpgradeCostDisplay">1</span> pluses.</button></td>
-					<td><button id="d1UpgradeButton" onclick="upgradeDigit(1)" style="display:none">Double digit 1 production.<br>Current bonus: x<span id="d1multDisplay">0.5</span>.<br>Cost: <span id="d1UpgradeCostDisplay">16</span> pluses.</button></td>
-					<td><button id="d2UpgradeButton" onclick="upgradeDigit(2)" style="display:none">Double digit 2 production.<br>Current bonus: x<span id="d2multDisplay">0.25</span>.<br>Cost: <span id="d2UpgradeCostDisplay">128</span> pluses.</button></td>
-					<td><button id="d3UpgradeButton" onclick="upgradeDigit(3)" style="display:none">Double digit 3 production.<br>Current bonus: x<span id="d3multDisplay">0.125</span>.<br>Cost: <span id="d3UpgradeCostDisplay">1024</span> pluses.</button></td>
-					<td><button id="d4UpgradeButton" onclick="upgradeDigit(4)" style="display:none">Double digit 4 production.<br>Current bonus: x<span id="d4multDisplay">0.063</span>.<br>Cost: <span id="d4UpgradeCostDisplay">8192</span> pluses.</button></td>
-					<td><button id="d5UpgradeButton" onclick="upgradeDigit(5)" style="display:none">Double digit 5 production.<br>Current bonus: x<span id="d5multDisplay">0.031</span>.<br>Cost: <span id="d5UpgradeCostDisplay">65536</span> pluses.</button></td>
-					<td><button id="d6UpgradeButton" onclick="upgradeDigit(6)" style="display:none">Double digit 6 production.<br>Current bonus: x<span id="d6multDisplay">0.016</span>.<br>Cost: <span id="d6UpgradeCostDisplay">524288</span> pluses.</button></td>
-					<td><button id="d7UpgradeButton" onclick="upgradeDigit(7)" style="display:none">Double digit 7 production.<br>Current bonus: x<span id="d7multDisplay">0.008</span>.<br>Cost: <span id="d7UpgradeCostDisplay">4194304</span> pluses.</button></td>
-					<td><button id="d8UpgradeButton" onclick="upgradeDigit(8)" style="display:none">Double digit 8 production.<br>Current bonus: x<span id="d8multDisplay">0.004</span>.<br>Cost: <span id="d8UpgradeCostDisplay">33554432</span> pluses.</button></td>
-					<td><button id="d9UpgradeButton" onclick="upgradeDigit(9)" style="display:none">Double digit 9 production.<br>Current bonus: x<span id="d9multDisplay">0.002</span>.<br>Cost: <span id="d9UpgradeCostDisplay">268435456</span> pluses.</button>
+					<td><button id="d1UpgradeButton" onclick="upgradeDigit(1)" style="display:none">Double digit 1 production.<br>Current bonus: x<span id="d1multDisplay">0.5</span>.<br>Cost: <span id="d1UpgradeCostDisplay">8</span> pluses.</button></td>
+					<td><button id="d2UpgradeButton" onclick="upgradeDigit(2)" style="display:none">Double digit 2 production.<br>Current bonus: x<span id="d2multDisplay">0.25</span>.<br>Cost: <span id="d2UpgradeCostDisplay">64</span> pluses.</button></td>
+					<td><button id="d3UpgradeButton" onclick="upgradeDigit(3)" style="display:none">Double digit 3 production.<br>Current bonus: x<span id="d3multDisplay">0.125</span>.<br>Cost: <span id="d3UpgradeCostDisplay">512</span> pluses.</button></td>
+					<td><button id="d4UpgradeButton" onclick="upgradeDigit(4)" style="display:none">Double digit 4 production.<br>Current bonus: x<span id="d4multDisplay">0.063</span>.<br>Cost: <span id="d4UpgradeCostDisplay">4096</span> pluses.</button></td>
+					<td><button id="d5UpgradeButton" onclick="upgradeDigit(5)" style="display:none">Double digit 5 production.<br>Current bonus: x<span id="d5multDisplay">0.031</span>.<br>Cost: <span id="d5UpgradeCostDisplay">32768</span> pluses.</button></td>
+					<td><button id="d6UpgradeButton" onclick="upgradeDigit(6)" style="display:none">Double digit 6 production.<br>Current bonus: x<span id="d6multDisplay">0.016</span>.<br>Cost: <span id="d6UpgradeCostDisplay">262144</span> pluses.</button></td>
+					<td><button id="d7UpgradeButton" onclick="upgradeDigit(7)" style="display:none">Double digit 7 production.<br>Current bonus: x<span id="d7multDisplay">0.008</span>.<br>Cost: <span id="d7UpgradeCostDisplay">2097152</span> pluses.</button></td>
+					<td><button id="d8UpgradeButton" onclick="upgradeDigit(8)" style="display:none">Double digit 8 production.<br>Current bonus: x<span id="d8multDisplay">0.004</span>.<br>Cost: <span id="d8UpgradeCostDisplay">16777216</span> pluses.</button></td>
+					<td><button id="d9UpgradeButton" onclick="upgradeDigit(9)" style="display:none">Double digit 9 production.<br>Current bonus: x<span id="d9multDisplay">0.002</span>.<br>Cost: <span id="d9UpgradeCostDisplay">134217768</span> pluses.</button>
 				</tr></td>
 			</table>
 			<p>You have done <span id="digitShiftsDisplay" style = "font-size: 24">0</span> digit shifts.<br>
