@@ -101,7 +101,7 @@
 		function upgradeDigit(i) {
 			if(player.digitUpgradeCosts[i].gt(player.pluses)) return 0; // Can't buy
 			player.pluses -= player.digitUpgradeCosts[i];
-			player.digitMults[i] = player.digitMults[i].mulitply(2);
+			player.digitMults[i] = player.digitMults[i].multiply(2);
 			player.digitUpgradeCosts[i] = player.digitUpgradeCosts[i].multiply(Decimal.pow(2,i+1));
 			player.nps[i] = player.nps[i].multiply(2);
 			update("plusesDisplay",player.pluses);
@@ -153,7 +153,7 @@
 
 		function hardReset() {
 			if(confirm("Are you sure you want to hard reset? This will erase all your progress!")) {
-				localStorage.removeItem("DCSave")
+				resetPlayer(Infinity);
 				location.reload()
 			}
 		}
