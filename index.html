@@ -4,7 +4,8 @@
 		<script type="text/javascript" src="logarithmica_numerus_lite.js"></script>
 		<script>
 		function update(set,get){
-			document.getElementById(set).innerHTML=get
+			if(get instanceof Decimal) document.getElementById(set).innerHTML = get.toFixed(0)
+			else document.getElementById(set).innerHTML=get
 		}
 
 		function showElement(elementID, className="inline-block") {
@@ -22,55 +23,72 @@
 			showElement(tabName)
 			tab=tabName
 		}
+			
+		function decimalArray(length, value, multiplier) {
+			a = []
+			
+			for(var i = 0; i < length; i++) {
+				a.push(new Decimal(value).multiply(multiplier**i))
+			}
+			
+			return a
+		}
 
-		var player = { // Anythig you want to be saved
-			numbers:[10,10,10,10,10,10,10,10,10,10], 
-			nps:[0,0,0,0,0,0,0,0,0,0],
-			digitAmounts:[0,0,0,0,0,0,0,0,0,0],
-			digitCosts:[10,10,10,10,10,10,10,10,10,10],
-			digitMults:[1,0.5,0.25,0.125,0.0625,0.03125,0.015625,0.0078125,0.00390625,0.001953125],
-			digitUpgradeCosts:[1,16,128,1024,8192,65536,524288,4194304,33554432,268435456],
-			pluses:0,
+		var player = { // Anything you want to be saved
+			numbers:decimalArray(10, 10, 1), 
+			nps:decimalArray(10, 0, 0),
+			digitAmounts:decimalArray(10, 0, 0),
+			digitCosts:decimalArray(10, 10, 1),
+			digitMults:decimalArray(10, 1, 0.5),
+			digitUpgradeCosts:decimalArray(10, 1, 8),
+			pluses:new Decimal(0),
 			digitShifts:0,
 			nextDigit:1,
-			digitShiftCost:4
+			digitShiftCost:new Decimal(4)
+		}
+		
+		function resetPlayer(layers) {
+			if(layers >= 1) { // reset digits
+				player.numbers = decimalArray(10, 10, 1)
+				player.nps = decimalArray(10, 0, 0)
+				player.digitAmounts = decimalArray(10, 0, 0)
+				player.digitCosts = decimalArray(10, 10, 1)
+				player.digitMults = decimalArray(10, 1, 0.5)
+			}
+			if(layers >= 2) { // reset addition
+				player.digitUpgradeCosts = decimalArray(10, 1, 8)
+				player.pluses = new Decimal(0)
+				player.digitShifts = 0
+				player.nextDigit = 1
+				player.digitShiftCost = new Decimal(4)
+			}
 		}
 
 		function buyDigit(i) {
-			if (player.digitCosts[i] > player.numbers[i]) return 0; // can't buy the digi - function ends here
-			player.numbers[i] -= player.digitCosts[i]; // subtract the cost
-			player.digitCosts[i] = player.digitCosts[i]*2; // make the next digit cost more
-			player.digitAmounts[i]++; // one more digit
-			player.nps[i] = player.digitAmounts[i]*player.digitMults[i]; // this will be how many numbers we get per tick
+			if (player.digitCosts[i] > player.numbers[i]) return 0; // can't buy the digit - function ends here
+			player.numbers[i] = player.numbers[i].subtract(player.digitCosts[i]); // subtract the cost
+			player.digitCosts[i] = player.digitCosts[i].multiply(2); // make the next digit cost more
+			player.digitAmounts[i] = player.digitAmounts[i].add(1); // one more digit
+			player.nps[i] = player.digitAmounts[i].multiply(player.digitMults[i]); // this will be how many numbers we get per tick
 			update(i+"sDisplay",player.numbers[i]);
 			update("d"+i+"amountDisplay",player.digitAmounts[i]);
 			update("d"+i+"costDisplay",player.digitCosts[i]);
 		}
 
 		function getPluses() { // code to determine how many pluses we should get when adding digits
-			var temp = 1; // storage variable
+			var temp = new Decimal(1); // storage variable
 			for(var i=0; i<player.nextDigit; i++) {
-				temp = temp*(1+Math.pow(player.numbers[i]/1000,1/3))
+				temp = temp.multiply(Decimal.pow(player.numbers[i].divide(1000),1/3).add(1))
 			}
-			return Math.floor(temp)-1;
+			return temp.subtract(1).floor();
 		}
 
 		function addDigits() {
 			showElement("additionTabButton")
-			var oldNumbers = player.numbers; // temporary value for numbers pre-prestige
-			var tempPluses = getPluses(); //temporary value for pluses to be gained
-			player = {
-				numbers:[10,10,10,10,10,10,10,10,10,10], 
-				nps:[0,0,0,0,0,0,0,0,0,0],
-				digitAmounts:[0,0,0,0,0,0,0,0,0,0],
-				digitCosts:[10,10,10,10,10,10,10,10,10,10],
-				digitMults:player.digitMults,
-				digitUpgradeCosts:player.digitUpgradeCosts,
-				pluses:player.pluses+tempPluses,
-				digitShifts:player.digitShifts,
-				nextDigit:player.nextDigit,
-				digitShiftCost:player.digitShiftCost
-			}
+			
+			player.pluses = player.pluses.add(getPluses()); // give player gained pluses
+			resetPlayer(1) // reset digits
+			
 			for(var i=0; i<10; i++) {
 				update(i+"sDisplay",player.numbers[i]);
 				update("d"+i+"amountDisplay",player.digitAmounts[i]);
@@ -81,25 +99,24 @@
 		}
 
 		function upgradeDigit(i) {
-			if(player.digitUpgradeCosts[i] > player.pluses) return 0; // Can't buy
+			if(player.digitUpgradeCosts[i].gt(player.pluses)) return 0; // Can't buy
 			player.pluses -= player.digitUpgradeCosts[i];
-			player.digitMults[i] = player.digitMults[i]*2;
-			player.digitUpgradeCosts[i] = player.digitUpgradeCosts[i]*Math.pow(2,i+1);
-			player.nps[i] = player.nps[i]*2;
+			player.digitMults[i] = player.digitMults[i].mulitply(2);
+			player.digitUpgradeCosts[i] = player.digitUpgradeCosts[i].multiply(Decimal.pow(2,i+1));
+			player.nps[i] = player.nps[i].multiply(2);
 			update("plusesDisplay",player.pluses);
 			update("d"+i+"UpgradeCostDisplay",player.digitUpgradeCosts[i]);
 			update("d"+i+"multDisplay",player.digitMults[i]);
 		}
 
 		function digitShift() {
-			if(player.digitShiftCost > player.pluses) return 0; // don't have enough
-			player.pluses -= player.digitShiftCost;
+			if(player.digitShiftCost.gt(player.pluses)) return 0; // don't have enough
+			player.pluses = player.pluses.subtract(player.digitShiftCost);
 			player.digitShifts++;
-			player.digitShiftCost = player.digitShiftCost*4;
+			player.digitShiftCost = player.digitShiftCost.multiply(4);
 			showElement("d"+player.nextDigit+"row", "table-row");
 			showElement("d"+player.nextDigit+"UpgradeButton");
 			player.nextDigit++;
-			if(player.nextDigit >= 10) hideElement("digitShiftButton"); // 9 is the last digit shift
 			update("digitShiftsDisplay",player.digitShifts);
 			update("nextDigitDisplay",player.nextDigit);
 			update("digitShiftCostDisplay",player.digitShiftCost);
@@ -107,15 +124,18 @@
 		}
 
 		function tick(t) {
+			diff = Date.now() - player.lastUpdate;
+			player.lastUpdate = Date.now();
+			
 			for(var i=0; i<10; i++) {
-				player.numbers[i] = player.numbers[i]+player.nps[i]*t;
+				player.numbers[i] = player.numbers[i].add(player.nps[i].multiply(diff/1000));
 			}
-			if(player.numbers[0] < 1000) hideElement("addButton")
-			if(player.numbers[0] >= 1000) {
+			if(player.numbers[0].lt(1000)) hideElement("addButton")
+			else {
 				showElement("addButton");
 				update("plusesToBeGained",getPluses());
 			}
-			if(player.pluses > 0 || player.digitMults[0] > 1) showElement("additionTabButton");
+			if(player.pluses.gt(0) || player.digitMults[0] > 1) showElement("additionTabButton");
 			// These lines are here to enforce the display to match the stored variable - they should be catered for by other functions, but this is insurance just in case.
 			for(var i=0;i<10;i++) {
 				update(i+"sDisplay",Math.floor(player.numbers[i]));
@@ -128,37 +148,13 @@
 			update("digitShiftsDisplay",player.digitShifts);
 			update("nextDigitDisplay",player.nextDigit);
 			update("digitShiftCostDisplay",player.digitShiftCost);
+			if(player.nextDigit >= 10) hideElement("digitShiftButton"); // 9 is the last digit shift
 		}
 
 		function hardReset() {
 			if(confirm("Are you sure you want to hard reset? This will erase all your progress!")) {
-				player = {
-					numbers:[10,10,10,10,10,10,10,10,10,10], 
-					nps:[0,0,0,0,0,0,0,0,0,0],
-					digitAmounts:[0,0,0,0,0,0,0,0,0,0],
-					digitCosts:[10,10,10,10,10,10,10,10,10,10],
-					digitMults:[1,0.5,0.25,0.125,0.0625,0.03125,0.015625,0.0078125,0.00390625,0.001953125],
-					digitUpgradeCosts:[1,16,128,1024,8192,65536,524288,4194304,33554432,268435456],
-					pluses:0,
-					digitShifts:0,
-					nextDigit:1,
-					digitShiftCost:4
-				}
-				for(var i=0;i<10;i++) {
-					update(i+"sDisplay",player.numbers[i]);
-					update("d"+i+"amountDisplay",player.digitAmounts[i]);
-					update("d"+i+"costDisplay",player.digitCosts[i]);
-					update("d"+i+"multDisplay",player.digitMults[i]);
-					update("d"+i+"UpgradeCostDisplay",player.digitUpgradeCosts[i]);
-					hideElement("d"+i+"row");
-					hideElement("d"+i+"UpgradeButton");
-				}
-				update("plusesDisplay",player.pluses);
-				update("digitShiftsDisplay",player.digitShifts);
-				update("nextDigitDisplay",player.nextdigit);
-				update("digitShiftCostDisplay",player.digitShiftcost);
-				hideElement("addButton");
-				hideElement("additionTabButton");
+				localStorage.removeItem("DCSave")
+				location.reload()
 			}
 		}
 
@@ -170,16 +166,35 @@
 			try {
 				player=JSON.parse(atob(save))
 				
-				if(player.numbers===undefined) player.numbers = [player.zeroes,10,10,10,10,10,10,10,10,10];
-				if(player.nps===undefined) player.nps = [player.zps,0,0,0,0,0,0,0,0,0];
-				if(player.digitAmounts===undefined) player.digitAmounts = [player.d0.amount,0,0,0,0,0,0,0,0,0];
-				if(player.digitCosts===undefined) player.digitCosts = [player.d0.cost,0,0,0,0,0,0,0,0,0];
-				if(player.digitMults===undefined) player.digitMults = [player.d0.mult,0.5,0.25,0.125,0.0625,0.03125,0.015625,0.0078125,0.00390625,0.001953125];
-				if(player.digitUpgradeCosts===undefined) player.digitUpgradeCosts = [player.d0.upgradeCost,16,128,1024,8192,65536,524288,4194304,33554432,268435456];
-				if(player.pluses===undefined) player.pluses = 0;
+				// Convert old saves to current
+				
+				if(player.numbers===undefined) player.numbers = decimalArray(10, player.zeroes, 0);
+				if(player.nps===undefined) player.nps = decimalArray(10, player.zps, 0);
+				if(player.digitAmounts===undefined) player.digitAmounts = decimalArray(10, player.d0.amount, 0);
+				if(player.digitCosts===undefined) player.digitCosts = decimalArray(10, player.d0.cost, 0);
+				if(player.digitMults===undefined) player.digitMults = decimalArray(10, 1, 0.5);
+				if(player.digitUpgradeCosts===undefined) player.digitUpgradeCosts = decimalArray(10, 1, 8);
+				if(player.pluses===undefined) player.pluses = new Decimal(0);
 				if(player.digitShifts===undefined) player.digitShifts = 0;
 				if(player.nextDigit===undefined) player.nextDigit = 1;
-				if(player.digitShiftCost===undefined) player.digitShiftCost = 4;
+				if(player.digitShiftCost===undefined) player.digitShiftCost = new Decimal(4);
+				if(player.lastUpdate===undefined) player.lastUpdate = Date.now()
+				
+				// Convert save to decimal
+				
+				for(var i = 0; i < 10; i++) {
+					player.numbers[i] = new Decimal(player.numbers[i])
+					player.nps[i] = new Decimal(player.nps[i])
+					player.digitAmounts[i] = new Decimal(player.digitAmounts[i])
+					player.digitCosts[i] = new Decimal(player.digitCosts[i])
+					player.digitMults[i] = new Decimal(player.digitMults[i])
+					player.digitUpgradeCosts[i] = new Decimal(player.digitUpgradeCosts[i])
+				}
+				player.pluses = new Decimal(player.pluses)
+				player.digitShiftCost = new Decimal(player.digitShiftCost)
+				
+				// Update UI
+				
 				for(var i=0;i<10;i++) {
 					update(i+"sDisplay",Math.floor(player.numbers[i]));
 					update("d"+i+"amountDisplay",player.digitAmounts[i]);
@@ -193,7 +208,7 @@
 				update("digitShiftsDisplay",player.digitShifts);
 				update("nextDigitDisplay",player.nextDigit);
 				update("digitShiftCostDisplay",player.digitShiftCost);
-				if(player.pluses > 0 || player.digitMults[0] > 1) {
+				if(player.pluses.gt(0) || player.digitMults[0].gt(1)) {
 					showElement("additionTabButton");
 				}
 			} catch (e) {
@@ -214,9 +229,7 @@
 
 		function init() {
 			if(localStorage.getItem('DCSave')!=null) load(localStorage.getItem('DCSave'))
-				setInterval(function() {
-				tick(0.05)
-			}, 50)
+			setInterval(tick, 50)
 			setInterval(save,10000)
 		}
 		</script>
