@@ -135,7 +135,7 @@
 
 		function upgradeDigit(i) {
 			if(player.digitUpgradeCosts[i].gt(player.pluses)) return 0; // Can't buy
-			player.pluses -= player.digitUpgradeCosts[i];
+			player.pluses = player.pluses.sub(player.digitUpgradeCosts[i]);
 			player.digitMults[i] = player.digitMults[i].multiply(2);
 			player.digitUpgradeCosts[i] = player.digitUpgradeCosts[i].multiply(Decimal.pow(2,i+1));
 			player.nps[i] = player.nps[i].multiply(2);
