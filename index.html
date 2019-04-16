@@ -67,9 +67,15 @@
 			if(n==0) return m2+abbreviate(e2/3-1);
 			if(n==2) return m2+"e"+e2;
 				if(n==4) { // mixed scientific notation
-			if(a.lt(1e33) return format(a,0);
+			if(a.lt(1e33)) return format(a,0);
 			else return format(a,1);
 			}
+		}
+
+		function format2(a,n) { // Format while removing decimal places.
+			a = new Decimal(a); // make it a Decimal, if it isn't already.
+			if (a.lt(1000)) return a.toFixed(0);
+			else return format(a,n);
 		}
 
 		var player = { // Anything you want to be saved
@@ -104,7 +110,7 @@
 		}
 
 		function buyDigit(i) {
-			if (player.digitCosts[i] > player.numbers[i]) return 0; // can't buy the digit - function ends here
+			if (player.digitCosts[i].gt(player.numbers[i])) return 0; // can't buy the digit - function ends here
 			player.numbers[i] = player.numbers[i].subtract(player.digitCosts[i]); // subtract the cost
 			player.digitCosts[i] = player.digitCosts[i].multiply(2); // make the next digit cost more
 			player.digitAmounts[i] = player.digitAmounts[i].add(1); // one more digit
@@ -155,21 +161,21 @@
 			if(player.numbers[0].lt(1000)) hideElement("addButton")
 			else {
 				showElement("addButton");
-				update("plusesToBeGained",format(getPluses()));
+				update("plusesToBeGained",format2(getPluses(),player.notation));
 			}
-			if(player.pluses.gt(0) || player.digitMults[0] > 1) showElement("additionTabButton");
+			if(player.pluses.gt(0) || player.digitMults[0].gt(1)) showElement("additionTabButton");
 			// These lines are here to enforce the display to match the stored variable.
 			for(var i=0;i<10;i++) {
-				update(i+"sDisplay",format(player.numbers[i]));
-				update("d"+i+"amountDisplay",format(player.digitAmounts[i]));
-				update("d"+i+"costDisplay",format(player.digitCosts[i]));
-				update("d"+i+"multDisplay",format(player.digitMults[i]));
-				update("d"+i+"UpgradeCostDisplay",format(player.digitUpgradeCosts[i]));
+				update(i+"sDisplay",format(player.numbers[i],player.notation));
+				update("d"+i+"amountDisplay",format2(player.digitAmounts[i],player.notation));
+				update("d"+i+"costDisplay",format2(player.digitCosts[i],player.notation));
+				update("d"+i+"multDisplay",format(player.digitMults[i],player.notation));
+				update("d"+i+"UpgradeCostDisplay",format2(player.digitUpgradeCosts[i],player.notation));
 			}
-			update("plusesDisplay",format(player.pluses));
+			update("plusesDisplay",format2(player.pluses,player.notation));
 			update("digitShiftsDisplay",player.digitShifts);
 			update("nextDigitDisplay",player.nextDigit);
-			update("digitShiftCostDisplay",format(player.digitShiftCost));
+			update("digitShiftCostDisplay",format2(player.digitShiftCost,player.notation));
 			if(player.nextDigit >= 10) hideElement("digitShiftButton"); // 9 is the last digit shift
 		}
 
@@ -181,12 +187,12 @@
 			}
 		}
 
-		var notationArray = ["Standard","Scientific","Engineering","Logarithm"]; // list of implemented notations, used by the next function
+		var notationArray = ["Standard","Scientific","Engineering","Logarithm","Mixed scientific"]; // list of implemented notations, used by the next function
 
 		function switchNotation() {
 			player.notation++;
 			if(player.notation>notationArray.length-1) player.notation=0;
-			update("notationDisplay",notationArray[game.notation]);
+			update("notationDisplay",notationArray[player.notation]);
 }
 
 		function save() {
