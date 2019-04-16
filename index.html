@@ -155,21 +155,21 @@
 			if(player.numbers[0].lt(1000)) hideElement("addButton")
 			else {
 				showElement("addButton");
-				update("plusesToBeGained",format(getPluses()));
+				update("plusesToBeGained",format(getPluses(),player.notation));
 			}
 			if(player.pluses.gt(0) || player.digitMults[0].gt(1)) showElement("additionTabButton");
 			// These lines are here to enforce the display to match the stored variable.
 			for(var i=0;i<10;i++) {
-				update(i+"sDisplay",format(player.numbers[i]));
-				update("d"+i+"amountDisplay",format(player.digitAmounts[i]));
-				update("d"+i+"costDisplay",format(player.digitCosts[i]));
-				update("d"+i+"multDisplay",format(player.digitMults[i]));
-				update("d"+i+"UpgradeCostDisplay",format(player.digitUpgradeCosts[i]));
+				update(i+"sDisplay",format(player.numbers[i],player.notation));
+				update("d"+i+"amountDisplay",format(player.digitAmounts[i],player.notation));
+				update("d"+i+"costDisplay",format(player.digitCosts[i],player.notation));
+				update("d"+i+"multDisplay",format(player.digitMults[i],player.notation));
+				update("d"+i+"UpgradeCostDisplay",format(player.digitUpgradeCosts[i],player.notation));
 			}
-			update("plusesDisplay",format(player.pluses));
+			update("plusesDisplay",format(player.pluses,player.notation));
 			update("digitShiftsDisplay",player.digitShifts);
 			update("nextDigitDisplay",player.nextDigit);
-			update("digitShiftCostDisplay",format(player.digitShiftCost));
+			update("digitShiftCostDisplay",format(player.digitShiftCost,player.notation));
 			if(player.nextDigit >= 10) hideElement("digitShiftButton"); // 9 is the last digit shift
 		}
 
