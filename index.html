@@ -89,8 +89,7 @@
 			digitShifts:0,
 			nextDigit:1,
 			digitShiftCost:new Decimal(4),
-			notation:0,
-			crosses:new Decimal(0)
+			notation:0
 		}
 		
 		function resetPlayer(layers) {
@@ -107,9 +106,6 @@
 				player.digitShifts = 0
 				player.nextDigit = 1
 				player.digitShiftCost = new Decimal(4)
-			}
-			if(layers >= 3) { // reset multiplication
-				player.crosses = new Decimal(0);
 			}
 		}
 
@@ -129,7 +125,7 @@
 			return temp.subtract(1).floor();
 		}
 
-		function addDigits() { // prestige 1
+		function addDigits() {
 			showElement("additionTabButton")
 			
 			player.pluses = player.pluses.add(getPluses()); // give player gained pluses
@@ -155,15 +151,6 @@
 			player.nextDigit++;
 		}
 
-		function multiplyNumbers() { // prestige 2
-			showElement("multiplicationTabButton")
-			
-			player.crosses = player.crosses.add(Decimal.pow(player.pluses/1000000,0.5).floor());
-			resetPlayer(2) // reset digits and addition content
-			hideElement("addButton");
-			hideElement("multiplyButton");
-		}
-
 		function tick(t) {
 			diff = Date.now() - player.lastUpdate;
 			player.lastUpdate = Date.now();
@@ -176,13 +163,7 @@
 				showElement("addButton");
 				update("plusesToBeGained",format2(getPluses(),player.notation));
 			}
-			if(player.pluses.lt(1e6)) hideElement("multiplyButton")
-			else {
-				showElement("multiplyButton");
-				update("crossesToBeGained",format2(Decimal.pow(player.pluses/1000000,0.5).floor(),player.notation));
-			}
 			if(player.pluses.gt(0) || player.digitMults[0].gt(1)) showElement("additionTabButton");
-			if(player.crosses.gt(0)) showelement("multiplicationTabButton");
 			// These lines are here to enforce the display to match the stored variable.
 			for(var i=0;i<10;i++) {
 				update(i+"sDisplay",format(player.numbers[i],player.notation));
@@ -196,7 +177,6 @@
 			update("nextDigitDisplay",player.nextDigit);
 			update("digitShiftCostDisplay",format2(player.digitShiftCost,player.notation));
 			if(player.nextDigit >= 10) hideElement("digitShiftButton"); // 9 is the last digit shift
-			update("crossesDisplay",format2(player.crosses,player.notation));
 		}
 
 		function hardReset() {
@@ -237,7 +217,6 @@
 				if(player.digitShiftCost===undefined) player.digitShiftCost = new Decimal(4);
 				if(player.lastUpdate===undefined) player.lastUpdate = Date.now();
 				if (player.notation===undefined) player.notation=0; // Yes, you start in standard notation. Deal with it.
-				if(player.crosses===undefined) player.crosses = new Decimal(0);
 				
 				// Convert save to decimal
 				
@@ -297,12 +276,10 @@
 		<div id = "header" style = "text-align: center; margin: 10px">
 			<button id="digitsTabButton" onclick="switchTab('digits')">Digits</button>
 			<button id="additionTabButton" style="display:none" onclick="switchTab('addition')">Addition</button>
-			<button id="multiplicationTabButton" style="display:none" onclick="switchTab('multiplication')">Multiplication</button>
 			<button id="optionsTabButton" onclick="switchTab('options')">Options</button>
 		</div>
 		<div id = "prestige" style = "text-align: center; margin: 10px">
 			<button id="addButton" style="display:none" onclick="addDigits()">Add your digits to boost your production.<br>Gain <span id="plusesToBeGained">1</span> pluses.</div></button>
-			<button id="multiplyButton" style="display:none" onclick="multiplyNumbers()">Muiliply your numbers to gain upgrades.<br>Gain <span id="crossesToBeGained">1</span> crosses.</div></button>
 		</div>
 		<div id="digits">
 			<table>
@@ -400,9 +377,6 @@
 			</table>
 			<p>You have done <span id="digitShiftsDisplay" style = "font-size: 24">0</span> digit shifts.<br>
 			<button id="digitShiftButton" onclick="digitShift()">Unlock digit <span id="nextDigitDisplay">1</span>.<br>Cost: <span id="digitShiftCostDisplay">4</span> pluses.</button>
-		</div>
-		<div style="display:none" id="multiplication">
-			<p>You have <span id="crossesDisplay" style = "font-size: 24">0</span> crosses.
 		</div>
 <a style = "position: absolute; left: 20; bottom: 20" href="https://discord.gg/RR2kv5">Discord</a>
 	</body>
