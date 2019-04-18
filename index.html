@@ -121,6 +121,14 @@
 			player.nps[i] = player.digitAmounts[i].multiply(player.digitMults[i]); // this will be how many numbers we get per tick
 		}
 
+		function maxAllDigits() { // buys max of all unlocked digits.
+			for(var i=0; i<=player.digitShifts; i++) {
+				while(player.numbers[i] >= player.digitCosts[i] {
+					buyDigit(i);
+				}
+			}
+		}
+
 		function getPluses() { // code to determine how many pluses we should get when adding digits
 			var temp = new Decimal(1); // storage variable
 			for(var i=0; i<player.nextDigit; i++) {
@@ -306,6 +314,7 @@
 			<button id="multiplyButton" style="display:none" onclick="multiplyNumbers()">Multiply your numbers to gain upgrades.<br>Gain <span id="crossesToBeGained">1</span> crosses.</div></button>
 		</div>
 		<div id="digits">
+			<button id="maxAllButton" onclick="maxAllDigits()">Max all</button>
 			<table>
 				<tr>
 					<th>Number</th>
