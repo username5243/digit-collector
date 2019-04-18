@@ -156,7 +156,8 @@
 		}
 
 		function multiplyNumbers() { // prestige 2
-			showElement("multiplicationTabButton")
+			showElement("multiplicationTabButton");
+			hideElement("additionTabButton");
 			
 			player.crosses = player.crosses.add(Decimal.pow(player.pluses/1000000,0.5).floor());
 			resetPlayer(2) // reset digits and addition content
@@ -182,7 +183,7 @@
 				update("crossesToBeGained",format2(Decimal.pow(player.pluses/1000000,0.5).floor(),player.notation));
 			}
 			if(player.pluses.gt(0) || player.digitMults[0].gt(1)) showElement("additionTabButton");
-			if(player.crosses.gt(0)) showelement("multiplicationTabButton");
+			if(player.crosses.gt(0)) showElement("multiplicationTabButton");
 			// These lines are here to enforce the display to match the stored variable.
 			for(var i=0;i<10;i++) {
 				update(i+"sDisplay",format(player.numbers[i],player.notation));
