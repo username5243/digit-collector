@@ -153,6 +153,14 @@
 			player.nps[i] = player.nps[i].multiply(2);
 		}
 
+		function maxAllDigitUpgrades() { // buys max upgrades of all digits. Prioritizes lower digits over higher ones so as to get the single biggest multiplier to overall production (and thus, gain of pluses).
+			for(var i=0; i<=player.digitShifts; i++) {
+				while(player.numbers[i].gte(player.digitUpgradeCosts[i])) {
+					upgradeDigit(i);
+				}
+			}
+		}
+
 		function digitShift() {
 			if(player.digitShiftCost.gt(player.pluses)) return 0; // don't have enough
 			player.pluses = player.pluses.subtract(player.digitShiftCost);
@@ -166,6 +174,9 @@
 		function multiplyNumbers() { // prestige 2
 			showElement("multiplicationTabButton");
 			hideElement("additionTabButton");
+			for(var i=1; i<=9; i++) {
+				hideElement("d"+i+"row");
+			}
 			
 			player.crosses = player.crosses.add(Decimal.pow(player.pluses/1000000,0.5).floor());
 			resetPlayer(2) // reset digits and addition content
@@ -395,6 +406,7 @@
 		</div>
 		<div style="display:none" id="addition">
 			<p>You have <span id="plusesDisplay" style = "font-size: 24">0</span> pluses.
+			<button id="maxUpgradesButton" onclick="maxAllDigitUpgrades()">Max all</button>
 			<table>
 				<tr>
 					<td><button id="d0UpgradeButton" onclick="upgradeDigit(0)">Double digit 0 production.<br>Current bonus: x<span id="d0multDisplay">1</span>.<br>Cost: <span id="d0UpgradeCostDisplay">1</span> pluses.</button></td>
