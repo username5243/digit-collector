@@ -117,6 +117,14 @@
 			player.nps[i] = player.digitAmounts[i].multiply(player.digitMults[i]); // this will be how many numbers we get per tick
 		}
 
+		function maxAllDigits() { // buys max of all unlocked digits.
+			for(var i=0; i<=player.digitShifts; i++) {
+				while(player.numbers[i].gte(player.digitCosts[i])) {
+					buyDigit(i);
+				}
+			}
+		}
+
 		function getPluses() { // code to determine how many pluses we should get when adding digits
 			var temp = new Decimal(1); // storage variable
 			for(var i=0; i<player.nextDigit; i++) {
@@ -282,6 +290,7 @@
 			<button id="addButton" style="display:none" onclick="addDigits()">Add your digits to boost your production.<br>Gain <span id="plusesToBeGained">1</span> pluses.</div></button>
 		</div>
 		<div id="digits">
+			<button id="maxAllButton" onclick="maxAllDigits()">Max all</button>
 			<table>
 				<tr>
 					<th>Number</th>
