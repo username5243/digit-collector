@@ -158,7 +158,7 @@
 
 		function maxAllDigitUpgrades() { // buys max upgrades of all digits. Prioritizes lower digits over higher ones so as to get the single biggest multiplier to overall production (and thus, gain of pluses).
 			for(var i=0; i<=player.digitShifts; i++) {
-				while(player.numbers[i].gte(player.digitUpgradeCosts[i])) {
+				while(player.pluses.gte(player.digitUpgradeCosts[i])) {
 					upgradeDigit(i);
 				}
 			}
