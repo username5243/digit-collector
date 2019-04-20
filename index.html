@@ -103,7 +103,7 @@
 				player.digitCosts = decimalArray(10, 10, 1)
 			}
 			if(layers >= 2) { // reset addition
-				player.digitMults = decimalArray(10, player.u1power, 0.5) // keeps affects of number upgrades, but not digit upgrades
+				player.digitMults = decimalArray(10, player.u1, 0.5) // keeps affects of number upgrades, but not digit upgrades
 				player.digitUpgradeCosts = decimalArray(10, 1, 8)
 				player.pluses = new Decimal(0)
 				player.digitShifts = 0
@@ -235,9 +235,9 @@
 			update("digitShiftCostDisplay",format2(player.digitShiftCost,player.notation));
 			if(player.nextDigit >= 10) hideElement("digitShiftButton"); // 9 is the last digit shift
 			update("crossesDisplay",format2(player.crosses,player.notation));
-			update("u1costDisplay",player.numberUpgradeCosts[0]); 
+			update("u1costDisplay",format2(player.numberUpgradeCosts[0])); 
 			// only upgrades 1 and 6 should ever change cost.
-			update("u1Display",player.u1);
+			update("u1Display",format(player.u1));
 		}
 
 		function hardReset() {
@@ -298,7 +298,7 @@
 				for(var i = 0; i<=9; i++) {
 					player.numberUpgradeCosts[i] = new Decimal(player.numberUpgradeCosts[i]);
 				}
-				player.ua = new Decimal(player.u1);
+				player.u1 = new Decimal(player.u1);
 				
 				// Update UI
 				
