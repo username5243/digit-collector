@@ -90,7 +90,9 @@
 			nextDigit:1,
 			digitShiftCost:new Decimal(4),
 			notation:0,
-			crosses:new Decimal(0)
+			crosses:new Decimal(0),
+			numberUpgradeCosts:[new Decimal(1),new Decimal(3),new Decimal(5),new Decimal(10),new Decimal(50),new Decimal(100),new Decimal(5),new Decimal(50),new Decimal(100)],
+			u1:new Decimal(1)
 		}
 		
 		function resetPlayer(layers) {
@@ -101,7 +103,7 @@
 				player.digitCosts = decimalArray(10, 10, 1)
 			}
 			if(layers >= 2) { // reset addition
-				player.digitMults = decimalArray(10, 1, 0.5)
+				player.digitMults = decimalArray(10, player.u1power, 0.5) // keeps affects of number upgrades, but not digit upgrades
 				player.digitUpgradeCosts = decimalArray(10, 1, 8)
 				player.pluses = new Decimal(0)
 				player.digitShifts = 0
@@ -109,6 +111,7 @@
 				player.digitShiftCost = new Decimal(4)
 			}
 			if(layers >= 3) { // reset multiplication
+				player.digitMults = decimalArray(10, 1, 0.5)
 				player.crosses = new Decimal(0);
 			}
 		}
@@ -184,6 +187,21 @@
 			hideElement("multiplyButton");
 		}
 
+		function buyNumberUpgrade(i) { // buys number upgrade i.
+			switch(i) { 
+				// n what follows, there should be one case for each number upgrade in the game (9 total). 
+				case 1:
+				if(player.numberUpgradeCosts[0].gt(player.crosses)) return 0; // can't buy it
+				player.u1 = player.u1.multiply(1.5);
+				for(var i=0; i<=9; i++) {
+					player.digitMults[i] = player.digitMults[i].multiply(1.5)); // update all digit multipliers
+				}
+				player.numberUpgradeCosts[0] = player.numberUpgradeCosts[0].multiply(8); // increase cost
+				break;
+				// Todo: add cases 2-9
+			}
+		}
+
 		function tick(t) {
 			diff = Date.now() - player.lastUpdate;
 			player.lastUpdate = Date.now();
@@ -202,7 +220,7 @@
 				update("crossesToBeGained",format2(Decimal.pow(player.pluses/1000000,0.5).floor(),player.notation));
 			}
 			if(player.pluses.gt(0) || player.digitMults[0].gt(1)) showElement("additionTabButton");
-			if(player.crosses.gt(0)) showElement("multiplicationTabButton");
+			if(player.crosses.gt(0) || player.u1.gt(1)) showElement("multiplicationTabButton");
 			// These lines are here to enforce the display to match the stored variable.
 			for(var i=0;i<10;i++) {
 				update(i+"sDisplay",format(player.numbers[i],player.notation));
@@ -217,6 +235,9 @@
 			update("digitShiftCostDisplay",format2(player.digitShiftCost,player.notation));
 			if(player.nextDigit >= 10) hideElement("digitShiftButton"); // 9 is the last digit shift
 			update("crossesDisplay",format2(player.crosses,player.notation));
+			update("u1costDisplay",player.upgradeCosts[0]); 
+			// only upgrades 1 and 6 should ever change cost.
+			update("u1Display",player.u1);
 		}
 
 		function hardReset() {
@@ -258,6 +279,8 @@
 				if(player.lastUpdate===undefined) player.lastUpdate = Date.now();
 				if (player.notation===undefined) player.notation=0; // Yes, you start in standard notation. Deal with it.
 				if(player.crosses===undefined) player.crosses = new Decimal(0);
+				if(player.numberUpgradeCosts===undefined) player.numberUpgradeCosts = [new Decimal(1),new Decimal(3),new Decimal(5),new Decimal(10),new Decimal(50),new Decimal(100),new Decimal(5),new Decimal(50),new Decimal(100)];
+				if(player.u1===undefined) player.u1 = new Decimal(1);
 				
 				// Convert save to decimal
 				
@@ -272,6 +295,10 @@
 				player.pluses = new Decimal(player.pluses)
 				player.digitShiftCost = new Decimal(player.digitShiftCost)
 				player.crosses = new Decimal(player.crosses)
+				for(var i = 0; i<=9; i++) {
+					player.numberUpgradeCosts[i] = new Decimal(player.numberUpgradeCosts[i]);
+				}
+				player.ua = new Decimal(player.u1);
 				
 				// Update UI
 				
@@ -428,8 +455,8 @@
 			<p>You have <span id="crossesDisplay" style = "font-size: 24">0</span> crosses.
 			<table>
 				<tr>
-					<td><button>All digits produce 2x faster.<br>Current boost: x1.<br>Cost: 1 crosses.</button></td>
-					<td><button>Each digit gains a 1.04x production multiplier for each of that digit you buy.<br>Cost: 2 crosses.</button></td>
+					<td><button id="u1button">All digits produce 1.5x faster.<br>Current boost: x<span id="u1Display">1</span>.<br>Cost: <span id="u1costDisplay">1</span> crosses.</button></td>
+					<td><button>Each digit gains a 1.04x production multiplier for each of that digit you buy.<br>Cost: 3 crosses.</button></td>
 					<td><button>Each subsequent digit is 0.7x as strong as the previous instead of 0.5x.<br>Cost: 5 crosses.</button></td>
 				</tr>
 				<tr>
