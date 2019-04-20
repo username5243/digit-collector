@@ -235,7 +235,7 @@
 			update("digitShiftCostDisplay",format2(player.digitShiftCost,player.notation));
 			if(player.nextDigit >= 10) hideElement("digitShiftButton"); // 9 is the last digit shift
 			update("crossesDisplay",format2(player.crosses,player.notation));
-			update("u1costDisplay",player.upgradeCosts[0]); 
+			update("u1costDisplay",player.numberUpgradeCosts[0]); 
 			// only upgrades 1 and 6 should ever change cost.
 			update("u1Display",player.u1);
 		}
