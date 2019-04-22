@@ -92,7 +92,8 @@
 			notation:0,
 			crosses:new Decimal(0),
 			numberUpgradeCosts:[new Decimal(1),new Decimal(3),new Decimal(5),new Decimal(10),new Decimal(50),new Decimal(100),new Decimal(5),new Decimal(50),new Decimal(100)],
-			u1:new Decimal(1)
+			u1:new Decimal(1),
+			u2:false
 		}
 		
 		function resetPlayer(layers) {
@@ -113,6 +114,9 @@
 			if(layers >= 3) { // reset multiplication
 				player.digitMults = decimalArray(10, 1, 0.5)
 				player.crosses = new Decimal(0);
+				player.numberUpgradeCosts = [new Decimal(1),new Decimal(3),new Decimal(5),new Decimal(10),new Decimal(50),new Decimal(100),new Decimal(5),new Decimal(50),new Decimal(100)],
+				player.u1 = new Decimal(1),
+			player.u2 = false
 			}
 		}
 
@@ -122,6 +126,7 @@
 			player.digitCosts[i] = player.digitCosts[i].multiply(2); // make the next digit cost more
 			player.digitAmounts[i] = player.digitAmounts[i].add(1); // one more digit
 			player.nps[i] = player.digitAmounts[i].multiply(player.digitMults[i]); // this will be how many numbers we get per tick
+			if(player.u2) player.digitMults[i] = player.digitMults[i].multiply(1.04); // apply the affects of number upgrade 2
 		}
 
 		function maxAllDigits() { // buys max of all unlocked digits.
@@ -144,6 +149,11 @@
 			showElement("additionTabButton")
 			
 			player.pluses = player.pluses.add(getPluses()); // give player gained pluses
+			if(player.u2) { // if he has upgrade 2, make sure to reset mults from it.
+				for(var i=0; i<=player.digitShifst; i++) {
+					player.digitMults[i] = player.digitMults[i].divide(Decimal.pow(1.04,player.digitAmounts[i]));
+				}
+			}
 			resetPlayer(1) // reset digits
 			hideElement("addButton")
 		}
@@ -190,6 +200,7 @@
 		function buyNumberUpgrade(i) { // buys number upgrade i.
 			switch(i) { 
 				// n what follows, there should be one case for each number upgrade in the game (9 total). 
+				
 				case 1:
 				if(player.numberUpgradeCosts[0].gt(player.crosses)) return 0; // can't buy it
 				player.crosses = player.crosses.subtract(player.numberUpgradeCosts[0]);
@@ -199,7 +210,18 @@
 				}
 				player.numberUpgradeCosts[0] = player.numberUpgradeCosts[0].multiply(8); // increase cost
 				break;
-				// Todo: add cases 2-9
+				
+				case 2:
+				if(player.u2) return 0; // already bought it once; don't do anything if he clicks it again
+				if(player.numberUpgradeCosts[1].gt(player.crosses)) return 0; // can't buy it
+				player.crosses = player.crosses.subtract(player.numberUpgradeCosts[1]);
+				player.u2 = true;
+				for(var i=0; i<=player.digitShifts; i++) {
+					player.digitMults[i] = player.digitMults[i].multiply(Decimal.pow(1.04,player.digitAmounts[i])); // in case he bought it mid-run, apply retroactively.
+				}
+				break;
+				
+				// Todo: add cases 3-9
 			}
 		}
 
@@ -236,9 +258,9 @@
 			update("digitShiftCostDisplay",format2(player.digitShiftCost,player.notation));
 			if(player.nextDigit >= 10) hideElement("digitShiftButton"); // 9 is the last digit shift
 			update("crossesDisplay",format2(player.crosses,player.notation));
-			update("u1costDisplay",format2(player.numberUpgradeCosts[0])); 
+			update("u1costDisplay",format2(player.numberUpgradeCosts[0],player.notation)); 
 			// only upgrades 1 and 6 should ever change cost.
-			update("u1Display",format(player.u1));
+			update("u1Display",format(player.u1,player.notation));
 		}
 
 		function hardReset() {
@@ -282,6 +304,7 @@
 				if(player.crosses===undefined) player.crosses = new Decimal(0);
 				if(player.numberUpgradeCosts===undefined) player.numberUpgradeCosts = [new Decimal(1),new Decimal(3),new Decimal(5),new Decimal(10),new Decimal(50),new Decimal(100),new Decimal(5),new Decimal(50),new Decimal(100)];
 				if(player.u1===undefined) player.u1 = new Decimal(1);
+				if(player.u2===undefined) player.u2 = false;
 				
 				// Convert save to decimal
 				
@@ -457,7 +480,7 @@
 			<table>
 				<tr>
 					<td><button id="u1button" onclick="buyNumberUpgrade(1)">All digits produce 1.5x faster.<br>Current boost: x<span id="u1Display">1</span>.<br>Cost: <span id="u1costDisplay">1</span> crosses.</button></td>
-					<td><button>Each digit gains a 1.04x production multiplier for each of that digit you buy.<br>Cost: 3 crosses.</button></td>
+					<td><button id="u2button" onclick="buyNumberUpgrade(2)">Each digit gains a 1.04x production multiplier for each of that digit you buy.<br>Cost: 3 crosses.</button></td>
 					<td><button>Each subsequent digit is 0.7x as strong as the previous instead of 0.5x.<br>Cost: 5 crosses.</button></td>
 				</tr>
 				<tr>
