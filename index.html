@@ -34,19 +34,35 @@
 			return a
 		}
 
-		function abbreviate(i) { // get standard notation abbreviation for the i-th illion. (Currently only works properly to i = 999.)
-		if(i==0) return "K";
+		function abbreviate(i) { // get standard notation abbreviation for the i-th illion.
+			if(i==0) return "K";
 			if(i==1) return "M";
 			if(i==2) return "B";
 			var units = ["","U","Du","T","Qa","Qt","Sx","Sp","O","N"];
 			var tens = ["","Dc","Vg","Tg","Qd","Qi","Se","St","Og","Nn"];
-			var hundreds = ["","Ce","Dn","Tc","Qe","Qu","Sc","Si","Oe","Ne"]
+			var hundreds = ["","Ce","Dn","Tc","Qe","Qu","Sc","Si","Oe","Ne"];
 			var i2 = Math.floor(i/10);
 			var i3 = Math.floor(i2/10);
 			var unit = units[i%10];
 			var ten = tens[i2%10];
 			var hundred = hundreds[i3%10];
-			return unit+ten+hundred;
+			
+			// -illions greater than 999
+			
+			var mi = Math.floor((i%1e6)/1e3);
+			var mc = Math.floor((i%1e9)/1e6);
+			var na = Math.floor((i%1e12)/1e9);
+			var pc = Math.floor((i%1e15)/1e12);
+			var fm = Math.floor((i%1e18)/1e15);
+			
+			var ret = "";
+			if(pc > 0) ret += abbreviate(pc) + "PC-";
+			if(na > 0) ret += abbreviate(na) + "NA-";
+			if(mc > 0) ret += abbreviate(mc) + "MC-";
+			if(mi > 0) ret += abbreviate(mi) + "MI-";
+			ret += unit+ten+hundred;
+			
+			return ret;
 		}
 
 		function format(a,n) { // format number a in notation n (see var notationArray for a list of notations
@@ -57,8 +73,8 @@
 			var m = Math.round(1000*Math.pow(10,a.log10()-Math.floor(a.log10())))/1000; // mantissa of number, rounded to three decimal places
 			var e = Math.floor(a.log10()); // exponent of number
 			if (m>9.9995) { // would this mantissa cause the value to round up to 10.000? If so, prevent it.
-		m = 1;
-		e++;
+			m = 1;
+			e++;
 	}
 			if (n==1) return m+"e"+e; // scientific notation
 			if (n==3) return "e"+Math.round(1000*a.log10())/1000; // logarithm notation
