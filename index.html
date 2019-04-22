@@ -150,7 +150,7 @@
 			
 			player.pluses = player.pluses.add(getPluses()); // give player gained pluses
 			if(player.u2) { // if he has upgrade 2, make sure to reset mults from it.
-				for(var i=0; i<=player.digitShifst; i++) {
+				for(var i=0; i<=player.digitShifts; i++) {
 					player.digitMults[i] = player.digitMults[i].divide(Decimal.pow(1.04,player.digitAmounts[i]));
 				}
 			}
