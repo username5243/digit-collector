@@ -85,6 +85,7 @@
 			digitCosts:decimalArray(10, 10, 1),
 			digitMults:decimalArray(10, 1, 0.5),
 			digitUpgradeCosts:decimalArray(10, 1, 8),
+			digitUpgradeAmounts:decimalArray(10, 0, 0),
 			pluses:new Decimal(0),
 			digitShifts:0,
 			nextDigit:1,
@@ -93,10 +94,13 @@
 			crosses:new Decimal(0),
 			numberUpgradeCosts:[new Decimal(1),new Decimal(3),new Decimal(5),new Decimal(10),new Decimal(50),new Decimal(100),new Decimal(5),new Decimal(50),new Decimal(100)],
 			u1:new Decimal(1),
-			u2:false
+			u2:false,
+			u3:false
 		}
 		
 		function resetPlayer(layers) {
+			var digitShiftEffect = new decimal(0.5); // starting mult of each digit compared to previous one
+			if(player.u3) digitShiftEffect = new decimal(0.55);
 			if(layers >= 1) { // reset digits
 				player.numbers = decimalArray(10, 10, 1)
 				player.nps = decimalArray(10, 0, 0)
@@ -104,19 +108,21 @@
 				player.digitCosts = decimalArray(10, 10, 1)
 			}
 			if(layers >= 2) { // reset addition
-				player.digitMults = decimalArray(10, player.u1, 0.5) // keeps affects of number upgrades, but not digit upgrades
+				player.digitMults = decimalArray(10, player.u1, digitShiftEffect) // keeps affects of number upgrades, but not digit upgrades
 				player.digitUpgradeCosts = decimalArray(10, 1, 8)
+				player.digitUpgradeAmounts = decimalArray(10, 0, 0)
 				player.pluses = new Decimal(0)
 				player.digitShifts = 0
 				player.nextDigit = 1
 				player.digitShiftCost = new Decimal(4)
 			}
 			if(layers >= 3) { // reset multiplication
-				player.digitMults = decimalArray(10, 1, 0.5)
-				player.crosses = new Decimal(0);
-				player.numberUpgradeCosts = [new Decimal(1),new Decimal(3),new Decimal(5),new Decimal(10),new Decimal(50),new Decimal(100),new Decimal(5),new Decimal(50),new Decimal(100)],
-				player.u1 = new Decimal(1),
-			player.u2 = false
+				player.digitMults = decimalArray(10, 1, digitShiftEffect)
+				player.crosses = new Decimal(0)
+				player.numberUpgradeCosts = [new Decimal(1),new Decimal(3),new Decimal(5),new Decimal(10),new Decimal(50),new Decimal(100),new Decimal(5),new Decimal(50),new Decimal(100)]
+				player.u1 = new Decimal(1)
+				player.u2 = false
+				player.u3 = false
 			}
 		}
 
@@ -162,7 +168,9 @@
 			if(player.digitUpgradeCosts[i].gt(player.pluses)) return 0; // Can't buy
 			player.pluses = player.pluses.subtract(player.digitUpgradeCosts[i]);
 			player.digitMults[i] = player.digitMults[i].multiply(2);
+			player.digitUpgradeAmounts[i] = player.digitUpgradeAmounts[i].add(1);
 			player.digitUpgradeCosts[i] = player.digitUpgradeCosts[i].multiply(Decimal.pow(2,i+1));
+			if(player.digitUpgradeAmounts[i].gt(20)) player.digitUpgradeCosts[i] = player.digitUpgradeCosts[i].multiply(Decimal.pow(2,player.digitUpgradeAmounts[i].subtract(20)));
 			player.nps[i] = player.nps[i].multiply(2);
 		}
 
@@ -221,7 +229,17 @@
 				}
 				break;
 				
-				// Todo: add cases 3-9
+				case 3:
+				if(player.u3) return 0; // already bought it once; don't do anything if he clicks it again
+				if(player.numberUpgradeCosts[2].gt(player.crosses)) return 0; // can't buy it
+				player.crosses = player.crosses.subtract(player.numberUpgradeCosts[2]);
+				player.u3 = true;
+				for(var i=1; i<=9; i++) {
+					player.digitMults[i] = player.digitMults[i].multiply(Decimal.pow(1.1,i)); // apply to current multiply
+				}
+				break;
+				
+				// Todo: add cases 4-9
 			}
 		}
 
@@ -295,6 +313,7 @@
 				if(player.digitCosts===undefined) player.digitCosts = decimalArray(10, player.d0.cost, 0);
 				if(player.digitMults===undefined) player.digitMults = decimalArray(10, 1, 0.5);
 				if(player.digitUpgradeCosts===undefined) player.digitUpgradeCosts = decimalArray(10, 1, 8);
+				if(player.digitUpgradeAmounts===undefined) player.digitUpgradeAmounts = decimalArray(10, 0, 0); // won't calculate them retroactively to the current multiply. Not a big deal, and certainly won't be upon release because he can't have multiplied before the current release.
 				if(player.pluses===undefined) player.pluses = new Decimal(0);
 				if(player.digitShifts===undefined) player.digitShifts = 0;
 				if(player.nextDigit===undefined) player.nextDigit = 1;
@@ -305,6 +324,7 @@
 				if(player.numberUpgradeCosts===undefined) player.numberUpgradeCosts = [new Decimal(1),new Decimal(3),new Decimal(5),new Decimal(10),new Decimal(50),new Decimal(100),new Decimal(5),new Decimal(50),new Decimal(100)];
 				if(player.u1===undefined) player.u1 = new Decimal(1);
 				if(player.u2===undefined) player.u2 = false;
+				if(player.u3===undefined) player.u2 = false;
 				
 				// Convert save to decimal
 				
@@ -315,6 +335,7 @@
 					player.digitCosts[i] = new Decimal(player.digitCosts[i])
 					player.digitMults[i] = new Decimal(player.digitMults[i])
 					player.digitUpgradeCosts[i] = new Decimal(player.digitUpgradeCosts[i])
+					player.digitUpgradeAmounts[i] = new Decimal(player.digitUpgradeAmounts[i])
 				}
 				player.pluses = new Decimal(player.pluses)
 				player.digitShiftCost = new Decimal(player.digitShiftCost)
@@ -481,7 +502,7 @@
 				<tr>
 					<td><button id="u1button" onclick="buyNumberUpgrade(1)">All digits produce 1.5x faster.<br>Current boost: x<span id="u1Display">1</span>.<br>Cost: <span id="u1costDisplay">1</span> crosses.</button></td>
 					<td><button id="u2button" onclick="buyNumberUpgrade(2)">Each digit gains a 1.04x production multiplier for each of that digit you buy.<br>Cost: 3 crosses.</button></td>
-					<td><button>Each subsequent digit is 0.7x as strong as the previous instead of 0.5x.<br>Cost: 5 crosses.</button></td>
+					<td><button id="u3button" onclick="buyNumberUpgrade(3)">Each subsequent digit is 0.55x as strong as the previous instead of 0.5x.<br>Cost: 5 crosses.</button></td>
 				</tr>
 				<tr>
 					<td><button>Digit upgrades make digits 4x faster instead of 2x.<br>Cost: 10 crosses.</button></td>
