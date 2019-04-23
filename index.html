@@ -99,8 +99,8 @@
 		}
 		
 		function resetPlayer(layers) {
-			var digitShiftEffect = new decimal(0.5); // starting mult of each digit compared to previous one
-			if(player.u3) digitShiftEffect = new decimal(0.55);
+			var digitShiftEffect = new Decimal(0.5); // starting mult of each digit compared to previous one
+			if(player.u3) digitShiftEffect = new Decimal(0.55);
 			if(layers >= 1) { // reset digits
 				player.numbers = decimalArray(10, 10, 1)
 				player.nps = decimalArray(10, 0, 0)
