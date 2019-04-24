@@ -27,7 +27,7 @@
 		var multiplicationSubtab="upgrades"
 
 		function switchMultiplicationSubtab(tabName) {
-			hideElement(multiplicatoinSubtab)
+			hideElement(multiplicationSubtab)
 			showElement(tabName)
 			multiplicationSubtab=tabName
 		}
@@ -307,8 +307,8 @@
 			update("u1costDisplay",format2(player.numberUpgradeCosts[0],player.notation)); 
 			// only upgrades 1 and 6 should ever change cost.
 			update("u1Display",format(player.u1,player.notation));
-			for(var i = 0; i <= 2; i++) {
-				if(player.DIGITS[i]==false) update("DIGITS"+i+"display","Disabled");
+			for(var i = 1; i <= 3; i++) {
+				if(player.DIGITS[i-1]==false) update("DIGITS"+i+"display","Disabled");
 				if(player.DIGITS[i]==true) update("DIGITS"+i+"display","Enabled");
 			}
 		}
