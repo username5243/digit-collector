@@ -289,7 +289,7 @@
 			if(player.crosses.gt(0) || player.u1.gt(1)) showElement("multiplicationTabButton");
 				if(player.DIGITS == [false,false,false] && player.u7 == false) hideElement("DIGITSSubtabButton");
 				if(player.DIGITS != [false,false,false] || player.u7) showElement("DIGITSSubtabButton");
-			if(player.DIGITS[0] == true) maxallDigits();
+			if(player.DIGITS[0] == true) maxAllDigits();
 			if(player.u7) showElement("DIGITS1button");
 			// These lines are here to enforce the display to match the stored variable.
 			for(var i=0;i<10;i++) {
@@ -310,7 +310,7 @@
 			update("u1Display",format(player.u1,player.notation));
 			for(var i = 1; i <= 3; i++) {
 				if(player.DIGITS[i-1]==false) update("DIGITS"+i+"display","Disabled");
-				if(player.DIGITS[i]==true) update("DIGITS"+i+"display","Enabled");
+				if(player.DIGITS[i-1]==true) update("DIGITS"+i+"display","Enabled");
 			}
 		}
 
