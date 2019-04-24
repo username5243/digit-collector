@@ -23,7 +23,15 @@
 			showElement(tabName)
 			tab=tabName
 		}
-			
+
+		var multiplicationSubtab="upgrades"
+
+		function switchMultiplicationSubtab(tabName) {
+			hideElement(multiplicatoinSubtab)
+			showElement(tabName)
+			multiplicationSubtab=tabName
+		}
+
 		function decimalArray(length, value, multiplier) {
 			a = []
 			
@@ -95,7 +103,9 @@
 			numberUpgradeCosts:[new Decimal(1),new Decimal(3),new Decimal(5),new Decimal(10),new Decimal(50),new Decimal(100),new Decimal(5),new Decimal(50),new Decimal(100)],
 			u1:new Decimal(1),
 			u2:false,
-			u3:false
+			u3:false,
+			u7:false,
+			DIGITS:[false,false,false] // states of the 3 D.I.G.I.T.S. (false = disabled, true = enabled)
 		}
 		
 		function resetPlayer(layers) {
@@ -123,6 +133,9 @@
 				player.u1 = new Decimal(1)
 				player.u2 = false
 				player.u3 = false
+				player.u7 = false
+			player.DIGITS = [false,false,false]
+			multiplicationSubtab = "upgrades" // take him out of D.I.G.I.T.S. tab
 			}
 		}
 
@@ -239,8 +252,20 @@
 				}
 				break;
 				
-				// Todo: add cases 4-9
+				case 7:
+				if(player.u7) return 0; // already bought it once; don't do anything if he clicks it again
+				if(player.numberUpgradeCosts[6].gt(player.crosses)) return 0; // can't buy it
+				player.crosses = player.crosses.subtract(player.numberUpgradeCosts[6]);
+				player.u7 = true;
+				player.DIGITS[0] = true;
+				break;
+				
+				// Todo: add cases 4-6, 8, 9
 			}
+		}
+
+		function toggleDIGITS(i) {
+			player.DIGITS[i-1] = !player.DIGITS[i-1];
 		}
 
 		function tick(t) {
@@ -262,6 +287,7 @@
 			}
 			if(player.pluses.gt(0) || player.digitMults[0].gt(1)) showElement("additionTabButton");
 			if(player.crosses.gt(0) || player.u1.gt(1)) showElement("multiplicationTabButton");
+			if(player.DIGITS[0] == true) maxallDigits();
 			// These lines are here to enforce the display to match the stored variable.
 			for(var i=0;i<10;i++) {
 				update(i+"sDisplay",format(player.numbers[i],player.notation));
@@ -279,6 +305,10 @@
 			update("u1costDisplay",format2(player.numberUpgradeCosts[0],player.notation)); 
 			// only upgrades 1 and 6 should ever change cost.
 			update("u1Display",format(player.u1,player.notation));
+			for(var i = 0; i <= 2; i++) {
+				if(player.DIGITS[i]==false) update("DIGITS"+i+"display","Disabled");
+				if(player.DIGITS[i]==true) update("DIGITS"+i+"display","Enabled");
+			}
 		}
 
 		function hardReset() {
@@ -324,7 +354,9 @@
 				if(player.numberUpgradeCosts===undefined) player.numberUpgradeCosts = [new Decimal(1),new Decimal(3),new Decimal(5),new Decimal(10),new Decimal(50),new Decimal(100),new Decimal(5),new Decimal(50),new Decimal(100)];
 				if(player.u1===undefined) player.u1 = new Decimal(1);
 				if(player.u2===undefined) player.u2 = false;
-				if(player.u3===undefined) player.u2 = false;
+				if(player.u3===undefined) player.u3 = false;
+				if(player.u7===undefined) player.u7 = false;
+				if(player.DIGITS===undefined) player.DIGITS = [false,false,false]
 				
 				// Convert save to decimal
 				
@@ -498,23 +530,32 @@
 		</div>
 		<div style="display:none" id="multiplication">
 			<p>You have <span id="crossesDisplay" style = "font-size: 24">0</span> crosses.
-			<table>
-				<tr>
-					<td><button id="u1button" onclick="buyNumberUpgrade(1)">All digits produce 1.5x faster.<br>Current boost: x<span id="u1Display">1</span>.<br>Cost: <span id="u1costDisplay">1</span> crosses.</button></td>
-					<td><button id="u2button" onclick="buyNumberUpgrade(2)">Each digit gains a 1.04x production multiplier for each of that digit you buy.<br>Cost: 3 crosses.</button></td>
-					<td><button id="u3button" onclick="buyNumberUpgrade(3)">Each subsequent digit is 0.55x as strong as the previous instead of 0.5x.<br>Cost: 5 crosses.</button></td>
+			<button id="upgradesSubtabButton" onclick="switchMultiplicationSubtab('upgrades')>Number Upgrades</button>
+			<button id="DIGITSSubtabButton" onclick="switchMultiplicationSubtab('autobuyers')>D.I.G.I.T.S.</button>
+			<div id="upgrades">
+				<table>
+					<tr>
+						<td><button id="u1button" onclick="buyNumberUpgrade(1)">All digits produce 1.5x faster.<br>Current boost: x<span id="u1Display">1</span>.<br>Cost: <span id="u1costDisplay">1</span> crosses.</button></td>
+						<td><button id="u2button" onclick="buyNumberUpgrade(2)">Each digit gains a 1.04x production multiplier for each of that digit you buy.<br>Cost: 3 crosses.</button></td>
+						<td><button id="u3button" onclick="buyNumberUpgrade(3)">Each subsequent digit is 0.55x as strong as the previous instead of 0.5x.<br>Cost: 5 crosses.</button></td>
 				</tr>
 				<tr>
-					<td><button>Digit upgrades make digits 2.5x faster instead of 2x.<br>Cost: 10 crosses.</button></td>
-					<td><button>You start with all digits unlocked after multiplication.<br>Cost: 50 crosses.</button></td>
-					<td><button>You gain 2x more pluses.<br>Current boost: x1.<br>Cost: 100 crosses.</button></td>
+						<td><button>Digit upgrades make digits 2.5x faster instead of 2x.<br>Cost: 10 crosses.</button></td>
+						<td><button>You start with all digits unlocked after multiplication.<br>Cost: 50 crosses.</button></td>
+						<td><button>You gain 2x more pluses.<br>Current boost: x1.<br>Cost: 100 crosses.</button></td>
 				</tr>
 				<tr>
-					<td><button>Install Digit Buy D.I.G.I.T.S.<br>Cost: 5 crosses.</button></td>
-					<td><button>Install Digit Upgrade d.I.G.I.T.S.<br>Cost: 50 crosses.</button></td>
-					<td><button>Install Digit Add d.I.G.I.T.S.<br>Cost: 100 crosses.</button></td>
+						<td><button id="u7button" onclick="buyNumberUpgrade(7)">Install Digit Buy D.I.G.I.T.S.<br>Cost: 5 crosses.</button></td>
+						<td><button>Install Digit Upgrade d.I.G.I.T.S.<br>Cost: 50 crosses.</button></td>
+						<td><button>Install Digit Add d.I.G.I.T.S.<br>Cost: 100 crosses.</button></td>
 				</tr>
 			</table>
+			</div>
+			<div id="autobuyers">
+				<button onclick="toggleDIGITS(1)" style="display:none">Digit Buy D.I.G.I.T.S.: <span id="DIGITS1display">Disabled</span></button>
+				<button onclick="toggleDIGITS(2)" style="display:none">Digit Upgrade D.I.G.I.T.S.: <span id="DIGITS2display">Disabled</span></button>
+				<button onclick="toggleDIGITS(3)" style="display:none">Digit Add D.I.G.I.T.S.: <span id="DIGITS3display">Disabled</span></button>
+			</div>
 		</div>
 <a style = "position: absolute; left: 20; bottom: 20" href="https://discord.gg/RR2kv5">Discord</a>
 	</body>
