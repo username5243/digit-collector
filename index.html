@@ -290,6 +290,7 @@
 				if(player.DIGITS == [false,false,false] && player.u7 == false) hideElement("DIGITSSubtabButton");
 				if(player.DIGITS != [false,false,false] || player.u7) showElement("DIGITSSubtabButton");
 			if(player.DIGITS[0] == true) maxallDigits();
+			if(player.u7) showElement("DIGITS1button");
 			// These lines are here to enforce the display to match the stored variable.
 			for(var i=0;i<10;i++) {
 				update(i+"sDisplay",format(player.numbers[i],player.notation));
