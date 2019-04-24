@@ -257,7 +257,7 @@
 				if(player.numberUpgradeCosts[6].gt(player.crosses)) return 0; // can't buy it
 				player.crosses = player.crosses.subtract(player.numberUpgradeCosts[6]);
 				player.u7 = true;
-				player.DIGITS[0] = true;
+				showElement("DIGITS1button");
 				break;
 				
 				// Todo: add cases 4-6, 8, 9
@@ -552,9 +552,9 @@
 			</table>
 			</div>
 			<div id="autobuyers">
-				<button onclick="toggleDIGITS(1)" style="display:none">Digit Buy D.I.G.I.T.S.: <span id="DIGITS1display">Disabled</span></button>
-				<button onclick="toggleDIGITS(2)" style="display:none">Digit Upgrade D.I.G.I.T.S.: <span id="DIGITS2display">Disabled</span></button>
-				<button onclick="toggleDIGITS(3)" style="display:none">Digit Add D.I.G.I.T.S.: <span id="DIGITS3display">Disabled</span></button>
+				<button id="DIGITS1button" onclick="toggleDIGITS(1)" style="display:none">Digit Buy D.I.G.I.T.S.: <span id="DIGITS1display">Disabled</span></button>
+				<button id="DIGITS2button" onclick="toggleDIGITS(2)" style="display:none">Digit Upgrade D.I.G.I.T.S.: <span id="DIGITS2display">Disabled</span></button>
+				<button id="DIGITS3button" onclick="toggleDIGITS(3)" style="display:none">Digit Add D.I.G.I.T.S.: <span id="DIGITS3display">Disabled</span></button>
 			</div>
 		</div>
 <a style = "position: absolute; left: 20; bottom: 20" href="https://discord.gg/RR2kv5">Discord</a>
