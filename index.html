@@ -287,6 +287,8 @@
 			}
 			if(player.pluses.gt(0) || player.digitMults[0].gt(1)) showElement("additionTabButton");
 			if(player.crosses.gt(0) || player.u1.gt(1)) showElement("multiplicationTabButton");
+				if(player.DIGITS == [false,false,false] && player.u7 == false) hideElement("DIGITSSubtabButton");
+				if(player.DIGITS != [false,false,false] || player.u7) showElement("DIGITSSubtabButton");
 			if(player.DIGITS[0] == true) maxallDigits();
 			// These lines are here to enforce the display to match the stored variable.
 			for(var i=0;i<10;i++) {
@@ -531,7 +533,7 @@
 		<div style="display:none" id="multiplication">
 			<p>You have <span id="crossesDisplay" style = "font-size: 24">0</span> crosses.
 			<button id="upgradesSubtabButton" onclick="switchMultiplicationSubtab('upgrades')>Number Upgrades</button>
-			<button id="DIGITSSubtabButton" onclick="switchMultiplicationSubtab('autobuyers')>D.I.G.I.T.S.</button>
+			<button id="DIGITSSubtabButton" onclick="switchMultiplicationSubtab('autobuyers') style="display:none">D.I.G.I.T.S.</button>
 			<div id="upgrades">
 				<table>
 					<tr>
