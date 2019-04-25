@@ -247,7 +247,7 @@
 				hideElement("d"+i+"row");
 			}
 			
-			player.crosses = player.crosses.add(Decimal.pow(player.pluses/1000000,0.5).floor());
+			player.crosses = player.crosses.add(Decimal.pow(player.pluses.divide(1e6),0.5).floor());
 			resetPlayer(2) // reset digits and addition content
 			hideElement("addButton");
 			hideElement("multiplyButton");
@@ -265,6 +265,7 @@
 					player.digitMults[i] = player.digitMults[i].multiply(1.5); // update all digit multipliers
 				}
 				player.numberUpgradeCosts[0] = player.numberUpgradeCosts[0].multiply(8); // increase cost
+				update("u1display",player.u1);
 				break;
 				
 				case 2:
