@@ -102,7 +102,7 @@
 			}
 			
 			var e2 = 3*Math.floor(e/3);
-			var m2 = (m*Math.pow(10,e-e2)).toFixed(3); // values for standard and engineering
+			var m2 = (m*Math.pow(10,e-e2)); // values for standard and engineering
 			
 			if (n==0) return m2+abbreviate(e2/3-1); // standard notation
 			if (n==1) return m+"e"+e; // scientific notation
