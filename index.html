@@ -1,4 +1,20 @@
 <html>
+	<style>
+	
+	button {
+		transition-duration: 0.2s;
+	}
+		
+	.available {
+		opacity: 1;
+	}
+		
+	.unavailable {
+		opacity: 0.5;
+	}
+	
+	</style>
+	
 	<head>
 		<title>Digit Collector</title>
 		<script type="text/javascript" src="logarithmica_numerus_lite.js"></script>
@@ -42,22 +58,38 @@
 			return a
 		}
 
-		function abbreviate(i) { // get standard notation abbreviation for the i-th illion. (Currently only works properly to i = 999.)
-		if(i==0) return "K";
+		function abbreviate(i) { // get standard notation abbreviation for the i-th illion.
+			if(i==0) return "K";
 			if(i==1) return "M";
 			if(i==2) return "B";
 			var units = ["","U","Du","T","Qa","Qt","Sx","Sp","O","N"];
 			var tens = ["","Dc","Vg","Tg","Qd","Qi","Se","St","Og","Nn"];
-			var hundreds = ["","Ce","Dn","Tc","Qe","Qu","Sc","Si","Oe","Ne"]
+			var hundreds = ["","Ce","Dn","Tc","Qe","Qu","Sc","Si","Oe","Ne"];
 			var i2 = Math.floor(i/10);
 			var i3 = Math.floor(i2/10);
 			var unit = units[i%10];
 			var ten = tens[i2%10];
 			var hundred = hundreds[i3%10];
-			return unit+ten+hundred;
+			
+			// -illions greater than 999
+			
+			var mi = Math.floor((i%1e6)/1e3);
+			var mc = Math.floor((i%1e9)/1e6);
+			var na = Math.floor((i%1e12)/1e9);
+			var pc = Math.floor((i%1e15)/1e12);
+			var fm = Math.floor((i%1e18)/1e15);
+			
+			var ret = "";
+			if(pc > 0) ret += abbreviate(pc) + "PC-";
+			if(na > 0) ret += abbreviate(na) + "NA-";
+			if(mc > 0) ret += abbreviate(mc) + "MC-";
+			if(mi > 0) ret += abbreviate(mi) + "MI-";
+			ret += unit+ten+hundred;
+			
+			return ret;
 		}
 
-		function format(a,n) { // format number a in notation n (see var notationArray for a list of notations
+		function format(a,n=player.notation) { // format number a in notation n (see var notationArray for a list of notations
 			a = new Decimal(a); // make it a Decimal, if it isn't already.
 			if (a.lt(10)) return a.toFixed(3);
 			if (a.lt(100)) return a.toFixed(2);
@@ -65,19 +97,22 @@
 			var m = Math.round(1000*Math.pow(10,a.log10()-Math.floor(a.log10())))/1000; // mantissa of number, rounded to three decimal places
 			var e = Math.floor(a.log10()); // exponent of number
 			if (m>9.9995) { // would this mantissa cause the value to round up to 10.000? If so, prevent it.
-		m = 1;
-		e++;
-	}
-			if (n==1) return m+"e"+e; // scientific notation
-			if (n==3) return "e"+Math.round(1000*a.log10())/1000; // logarithm notation
-			var e2 = 3*Math.floor(e/3);
-			var m2 = Math.round(1000*m*Math.pow(10,e-e2))/1000; // values for standard and engineering
-			if(n==0) return m2+abbreviate(e2/3-1);
-			if(n==2) return m2+"e"+e2;
-				if(n==4) { // mixed scientific notation
-			if(a.lt(1e33)) return format(a,0);
-			else return format(a,1);
+				m = 1;
+				e++;
 			}
+			
+			var e2 = 3*Math.floor(e/3);
+			var m2 = (m*Math.pow(10,e-e2)).toFixed(3); // values for standard and engineering
+			
+			if (n==0) return m2+abbreviate(e2/3-1); // standard notation
+			if (n==1) return m+"e"+e; // scientific notation
+			if (n==2) return m2+"e"+e2;
+			if (n==3) return "e"+a.log10().toFixed(3); // logarithm notation
+			if (n==4) { // mixed scientific notation
+				if(a.lt(1e33)) return format(a,0);
+				else return format(a,1);
+			}
+			if (n==5) return "ee"+Decimal.log10(Math.max(a.log10(), 1)).toFixed(5)
 		}
 
 		function format2(a,n) { // Format while removing decimal places.
@@ -308,6 +343,12 @@
 			update("u1costDisplay",format2(player.numberUpgradeCosts[0],player.notation)); 
 			// only upgrades 1 and 6 should ever change cost.
 			update("u1Display",format(player.u1,player.notation));
+			
+			// Update UI
+			
+			for(var i = 0; i < 10; i++) {
+				document.getElementById("d" + i + "button").className = player.digitCosts[i].lte(player.numbers[i]) ? "available" : "unavailable"
+				document.getElementById("d" + i + "UpgradeButton").className = player.digitUpgradeCosts[i].lte(player.pluses) ? "available" : "unavailable"
 			for(var i = 1; i <= 3; i++) {
 				if(player.DIGITS[i-1]==false) update("DIGITS"+i+"display","Disabled");
 				if(player.DIGITS[i-1]==true) update("DIGITS"+i+"display","Enabled");
@@ -322,13 +363,13 @@
 			}
 		}
 
-		var notationArray = ["Standard","Scientific","Engineering","Logarithm","Mixed scientific"]; // list of implemented notations, used by the next function
+		var notationArray = ["Standard","Scientific","Engineering","Logarithm","Mixed scientific","Double-logarithm"]; // list of implemented notations, used by the next function
 
 		function switchNotation() {
 			player.notation++;
 			if(player.notation>notationArray.length-1) player.notation=0;
 			update("notationDisplay",notationArray[player.notation]);
-}
+		}
 
 		function save() {
 			localStorage.setItem('DCSave',btoa(JSON.stringify(player)))
@@ -429,8 +470,8 @@
 			<button id="optionsTabButton" onclick="switchTab('options')">Options</button>
 		</div>
 		<div id = "prestige" style = "text-align: center; margin: 10px">
-			<button id="addButton" style="display:none" onclick="addDigits()">Add your digits to boost your production.<br>Gain <span id="plusesToBeGained">1</span> pluses.</div></button>
-			<button id="multiplyButton" style="display:none" onclick="multiplyNumbers()">Multiply your numbers to gain upgrades.<br>Gain <span id="crossesToBeGained">1</span> crosses.</div></button>
+			<button id="addButton" style="display:none" onclick="addDigits()">Add your digits to boost your production.<br>Gain <span id="plusesToBeGained">1</span> pluses.</button>
+			<button id="multiplyButton" style="display:none" onclick="multiplyNumbers()">Multiply your numbers to gain upgrades.<br>Gain <span id="crossesToBeGained">1</span> crosses.</button>
 		</div>
 		<div id="digits">
 			<button id="maxAllButton" onclick="maxAllDigits()">Max all</button>
@@ -521,6 +562,8 @@
 					<td><button id="d2UpgradeButton" onclick="upgradeDigit(2)" style="display:none">Double digit 2 production.<br>Current bonus: x<span id="d2multDisplay">0.25</span>.<br>Cost: <span id="d2UpgradeCostDisplay">64</span> pluses.</button></td>
 					<td><button id="d3UpgradeButton" onclick="upgradeDigit(3)" style="display:none">Double digit 3 production.<br>Current bonus: x<span id="d3multDisplay">0.125</span>.<br>Cost: <span id="d3UpgradeCostDisplay">512</span> pluses.</button></td>
 					<td><button id="d4UpgradeButton" onclick="upgradeDigit(4)" style="display:none">Double digit 4 production.<br>Current bonus: x<span id="d4multDisplay">0.063</span>.<br>Cost: <span id="d4UpgradeCostDisplay">4096</span> pluses.</button></td>
+				</tr>
+				<tr>
 					<td><button id="d5UpgradeButton" onclick="upgradeDigit(5)" style="display:none">Double digit 5 production.<br>Current bonus: x<span id="d5multDisplay">0.031</span>.<br>Cost: <span id="d5UpgradeCostDisplay">32768</span> pluses.</button></td>
 					<td><button id="d6UpgradeButton" onclick="upgradeDigit(6)" style="display:none">Double digit 6 production.<br>Current bonus: x<span id="d6multDisplay">0.016</span>.<br>Cost: <span id="d6UpgradeCostDisplay">262144</span> pluses.</button></td>
 					<td><button id="d7UpgradeButton" onclick="upgradeDigit(7)" style="display:none">Double digit 7 production.<br>Current bonus: x<span id="d7multDisplay">0.008</span>.<br>Cost: <span id="d7UpgradeCostDisplay">2097152</span> pluses.</button></td>
@@ -548,9 +591,12 @@
 						<td><button>You gain 2x more pluses.<br>Current boost: x1.<br>Cost: 100 crosses.</button></td>
 				</tr>
 				<tr>
-						<td><button id="u7button" onclick="buyNumberUpgrade(7)">Install Digit Buy D.I.G.I.T.S.<br>Cost: 5 crosses.</button></td>
-						<td><button>Install Digit Upgrade d.I.G.I.T.S.<br>Cost: 50 crosses.</button></td>
-						<td><button>Install Digit Add d.I.G.I.T.S.<br>Cost: 100 crosses.</button></td>
+					<td><button>Install Digit Buy D.I.G.I.T.S.<br>Cost: 5 crosses.</button></td>
+					<td><button>Install Digit Upgrade D.I.G.I.T.S.<br>Cost: 50 crosses.</button></td>
+					<td><button>Install Digit Add D.I.G.I.T.S.<br>Cost: 100 crosses.</button></td>
+					<td><button id="u7button" onclick="buyNumberUpgrade(7)">Install Digit Buy D.I.G.I.T.S.<br>Cost: 5 crosses.</button></td>
+					<td><button>Install Digit Upgrade d.I.G.I.T.S.<br>Cost: 50 crosses.</button></td>
+					<td><button>Install Digit Add d.I.G.I.T.S.<br>Cost: 100 crosses.</button></td>
 				</tr>
 			</table>
 			</div>
