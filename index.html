@@ -10,7 +10,7 @@
 	}
 		
 	.unavailable {
-		opacity: 0;
+		opacity: 0.5;
 	}
 	
 	</style>
@@ -104,7 +104,7 @@
 				if(a.lt(1e33)) return format(a,0);
 				else return format(a,1);
 			}
-			if (n==5) return "ee"+Decimal.log10(a.log10().max(1)).toFixed(5)
+			if (n==5) return "ee"+Decimal.log10(Math.max(a.log10(), 1)).toFixed(5)
 		}
 
 		function format2(a,n) { // Format while removing decimal places.
@@ -415,8 +415,8 @@
 			<button id="optionsTabButton" onclick="switchTab('options')">Options</button>
 		</div>
 		<div id = "prestige" style = "text-align: center; margin: 10px">
-			<button id="addButton" style="display:none" onclick="addDigits()">Add your digits to boost your production.<br>Gain <span id="plusesToBeGained">1</span> pluses.</div></button>
-			<button id="multiplyButton" style="display:none" onclick="multiplyNumbers()">Multiply your numbers to gain upgrades.<br>Gain <span id="crossesToBeGained">1</span> crosses.</div></button>
+			<button id="addButton" style="display:none" onclick="addDigits()">Add your digits to boost your production.<br>Gain <span id="plusesToBeGained">1</span> pluses.</button>
+			<button id="multiplyButton" style="display:none" onclick="multiplyNumbers()">Multiply your numbers to gain upgrades.<br>Gain <span id="crossesToBeGained">1</span> crosses.</button>
 		</div>
 		<div id="digits">
 			<button id="maxAllButton" onclick="maxAllDigits()">Max all</button>
