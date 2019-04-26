@@ -216,7 +216,7 @@
 
 		function upgradeDigit(i) {
 			var upgradeEffect = new Decimal(2);
-			if(player.u4) upgradeEffect = new Decimal(2.5);
+			if(player.u4) upgradeEffect = new Decimal(2.25);
 			if(player.digitUpgradeCosts[i].gt(player.pluses)) return 0; // Can't buy
 			player.pluses = player.pluses.subtract(player.digitUpgradeCosts[i]);
 			player.digitMults[i] = player.digitMults[i].multiply(upgradeEffect);
