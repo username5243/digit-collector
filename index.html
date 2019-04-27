@@ -379,6 +379,7 @@
 			update("crossesDisplay",format2(player.crosses,player.notation));
 			update("u1costDisplay",format2(player.numberUpgradeCosts[0],player.notation)); 
 			if(player.u5) hideElement("digitShiftInfo")
+			if(!player.u5) hideElement("digitShiftInfo")
 			// only upgrades 1 and 6 should ever change cost.
 			update("u1Display",format(player.u1,player.notation));
 			
@@ -616,7 +617,7 @@
 			<div id="digitShiftInfo">
 			<p>You have done <span id="digitShiftsDisplay" style = "font-size: 24">0</span> digit shifts.<br>
 			<button id="digitShiftButton" onclick="digitShift()">Unlock digit <span id="nextDigitDisplay">1</span>.<br>Cost: <span id="digitShiftCostDisplay">4</span> pluses.</button>
-			</duv>
+			</div>
 		</div>
 		<div style="display:none" id="multiplication">
 			<p>You have <span id="crossesDisplay" style = "font-size: 24">0</span> crosses.
