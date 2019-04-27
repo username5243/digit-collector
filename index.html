@@ -319,7 +319,7 @@
 		}
 
 		function tick(t) {
-			diff = Date.now() - player.lastUpdate;
+			var diff = new Decimal(Date.now() - player.lastUpdate);
 			player.lastUpdate = Date.now();
 			
 			for(var i=0; i<10; i++) {
