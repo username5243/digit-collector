@@ -140,6 +140,7 @@
 			u2:false,
 			u3:false,
 			u4:false,
+			u5:false,
 			u7:false,
 			DIGITS:[false,false,false] // states of the 3 D.I.G.I.T.S. (false = disabled, true = enabled)
 		}
@@ -159,17 +160,22 @@
 				player.digitUpgradeAmounts = decimalArray(10, 0, 0)
 				player.pluses = new Decimal(0)
 				player.digitShifts = 0
+				if(player.u5) player.digitShifts = 9
 				player.nextDigit = 1
+				if(player.u5) player.nextDigit = 10
 				player.digitShiftCost = new Decimal(4)
 			}
 			if(layers >= 3) { // reset multiplication
 				player.digitMults = decimalArray(10, 1, 0.5)
+				player.digitShifts = 0
+				player.nextDigit = 1
 				player.crosses = new Decimal(0)
 				player.numberUpgradeCosts = [new Decimal(1),new Decimal(3),new Decimal(5),new Decimal(10),new Decimal(50),new Decimal(100),new Decimal(5),new Decimal(50),new Decimal(100)]
 				player.u1 = new Decimal(1)
 				player.u2 = false
 				player.u3 = false
 				player.u4 = false
+				player.u5 = false
 				player.u7 = false
 			player.DIGITS = [false,false,false]
 			multiplicationSubtab = "upgrades" // take him out of D.I.G.I.T.S. tab
@@ -302,6 +308,17 @@
 				}
 				break;
 				
+				case 5:
+				if(player.u5) return 0; // already bought it once; don't do anything if he clicks it again
+				if(player.numberUpgradeCosts[4].gt(player.crosses)) return 0; // can't buy it
+				player.crosses = player.crosses.subtract(player.numberUpgradeCosts[4]);
+				player.u5 = true;
+				for(var i=0; i<=9; i++) {
+					showElement("d"+i+"row","table-row")
+					showElement("d"+i+"UpgradeButton")
+				}
+				break;
+				
 				case 7:
 				if(player.u7) return 0; // already bought it once; don't do anything if he clicks it again
 				if(player.numberUpgradeCosts[6].gt(player.crosses)) return 0; // can't buy it
@@ -348,6 +365,8 @@
 				update("d"+i+"costDisplay",format2(player.digitCosts[i],player.notation));
 				update("d"+i+"multDisplay",format(player.digitMults[i],player.notation));
 				update("d"+i+"UpgradeCostDisplay",format2(player.digitUpgradeCosts[i],player.notation));
+				showElement("d"+i+"row", player.digitShifts < i ? "none" : "table-row");
+				showElement("d"+i+"UpgradeButton", player.digitShifts < i ? "none" : null);
 			}
 			update("plusesDisplay",format2(player.pluses,player.notation));
 			update("digitShiftsDisplay",player.digitShifts);
@@ -416,6 +435,7 @@
 				if(player.u2===undefined) player.u2 = false;
 				if(player.u3===undefined) player.u3 = false;
 				if(player.u4===undefined) player.u4 = false;
+				if(player.u5===undefined) player.u5 = false;
 				if(player.u7===undefined) player.u7 = false;
 				if(player.DIGITS===undefined) player.DIGITS = [false,false,false]
 				
@@ -604,7 +624,7 @@
 				</tr>
 				<tr>
 						<td><button id="u4button" onclick="buyNumberUpgrade(4)">Digit upgrades make digits 2.25x faster instead of 2x.<br>Cost: 10 crosses.</button></td>
-						<td><button>You start with all digits unlocked after multiplication.<br>Cost: 50 crosses.</button></td>
+						<td><button id="u5button" onclick="buyNumberUpgrade(5)">You start with all digits unlocked after multiplication.<br>Cost: 50 crosses.</button></td>
 						<td><button>You gain 2x more pluses.<br>Current boost: x1.<br>Cost: 100 crosses.</button></td>
 				</tr>
 				<tr>
