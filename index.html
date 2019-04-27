@@ -196,7 +196,7 @@
 		function getPluses() { // code to determine how many pluses we should get when adding digits
 			var temp = new Decimal(1); // storage variable
 			for(var i=0; i<player.nextDigit; i++) {
-				temp = temp.multiply(Decimal.pow(player.numbers[i].divide(1000),1/3).add(1))
+				temp = temp.multiply(Decimal.pow(player.numbers[i].divide(1000),new Decimal(1).divide(3)).add(1))
 			}
 			return temp.subtract(1).floor();
 		}
@@ -323,7 +323,7 @@
 			player.lastUpdate = Date.now();
 			
 			for(var i=0; i<10; i++) {
-				player.numbers[i] = player.numbers[i].add(player.nps[i].multiply(diff/1000));
+				player.numbers[i] = player.numbers[i].add(player.nps[i].multiply(diff.divide(1000)));
 			}
 			if(player.numbers[0].lt(1000)) hideElement("addButton")
 			else {
