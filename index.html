@@ -275,7 +275,7 @@
 					player.digitMults[i] = player.digitMults[i].multiply(1.5); // update all digit multipliers
 				}
 				player.numberUpgradeCosts[0] = player.numberUpgradeCosts[0].multiply(8); // increase cost
-				update("u1display",player.u1);
+				update("u1display",format(player.u1));
 				break;
 				
 				case 2:
@@ -313,9 +313,12 @@
 				if(player.numberUpgradeCosts[4].gt(player.crosses)) return 0; // can't buy it
 				player.crosses = player.crosses.subtract(player.numberUpgradeCosts[4]);
 				player.u5 = true;
+				player.digitShifts = 9
+				player.nextDigit = 10
+				hideElement("digitShiftInfo")
 				for(var i=0; i<=9; i++) {
 					showElement("d"+i+"row","table-row")
-					showElement("d"+i+"UpgradeButton")
+					showElement("d"+i+"UpgradeButton");
 				}
 				break;
 				
@@ -375,6 +378,7 @@
 			if(player.nextDigit >= 10) hideElement("digitShiftButton"); // 9 is the last digit shift
 			update("crossesDisplay",format2(player.crosses,player.notation));
 			update("u1costDisplay",format2(player.numberUpgradeCosts[0],player.notation)); 
+			if(player.u5) hideElement("digitShiftInfo")
 			// only upgrades 1 and 6 should ever change cost.
 			update("u1Display",format(player.u1,player.notation));
 			
@@ -476,6 +480,7 @@
 				if(player.pluses.gt(0) || player.digitMults[0].gt(1)) {
 					showElement("additionTabButton");
 				}
+			if(player.u5) hideElement("digitShiftInfo")
 			} catch (e) {
 				console.log('Your save failed to load: '+e)
 			}
@@ -608,8 +613,10 @@
 					<td><button id="d9UpgradeButton" onclick="upgradeDigit(9)" style="display:none">Double digit 9 production.<br>Current bonus: x<span id="d9multDisplay">0.002</span>.<br>Cost: <span id="d9UpgradeCostDisplay">134217768</span> pluses.</button>
 				</tr></td>
 			</table>
+			<div id="digitShiftInfo">
 			<p>You have done <span id="digitShiftsDisplay" style = "font-size: 24">0</span> digit shifts.<br>
 			<button id="digitShiftButton" onclick="digitShift()">Unlock digit <span id="nextDigitDisplay">1</span>.<br>Cost: <span id="digitShiftCostDisplay">4</span> pluses.</button>
+			</duv>
 		</div>
 		<div style="display:none" id="multiplication">
 			<p>You have <span id="crossesDisplay" style = "font-size: 24">0</span> crosses.
