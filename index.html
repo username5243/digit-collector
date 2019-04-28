@@ -135,13 +135,14 @@
 			digitShiftCost:new Decimal(4),
 			notation:0,
 			crosses:new Decimal(0),
-			numberUpgradeCosts:[new Decimal(1),new Decimal(3),new Decimal(5),new Decimal(10),new Decimal(50),new Decimal(100),new Decimal(5),new Decimal(50),new Decimal(100)],
+			numberUpgradeCosts:[new Decimal(1),new Decimal(3),new Decimal(5),new Decimal(10),new Decimal(50),new Decimal(100),new Decimal(5),new Decimal(50),new Decimal(500)],
 			u1:new Decimal(1),
 			u2:false,
 			u3:false,
 			u4:false,
 			u5:false,
 			u7:false,
+			u8:false,
 			DIGITS:[false,false,false] // states of the 3 D.I.G.I.T.S. (false = disabled, true = enabled)
 		}
 		
@@ -170,13 +171,14 @@
 				player.digitShifts = 0
 				player.nextDigit = 1
 				player.crosses = new Decimal(0)
-				player.numberUpgradeCosts = [new Decimal(1),new Decimal(3),new Decimal(5),new Decimal(10),new Decimal(50),new Decimal(100),new Decimal(5),new Decimal(50),new Decimal(100)]
+				player.numberUpgradeCosts = [new Decimal(1),new Decimal(3),new Decimal(5),new Decimal(10),new Decimal(50),new Decimal(100),new Decimal(5),new Decimal(50),new Decimal(500)]
 				player.u1 = new Decimal(1)
 				player.u2 = false
 				player.u3 = false
 				player.u4 = false
 				player.u5 = false
 				player.u7 = false
+				player.u8 = false
 			player.DIGITS = [false,false,false]
 			multiplicationSubtab = "upgrades" // take him out of D.I.G.I.T.S. tab
 			}
@@ -330,7 +332,15 @@
 				showElement("DIGITS1button");
 				break;
 				
-				// Todo: add cases 4-6, 8, 9
+				case 8:
+				if(player.u8) return 0; // already bought it once; don't do anything if he clicks it again
+				if(player.numberUpgradeCosts[7].gt(player.crosses)) return 0; // can't buy it
+				player.crosses = player.crosses.subtract(player.numberUpgradeCosts[7]);
+				player.u8 = true;
+				showElement("DIGITS2button");
+				break;
+				
+				// Todo: add cases 6, 9
 			}
 		}
 
@@ -360,7 +370,9 @@
 				if(player.DIGITS == [false,false,false] && player.u7 == false) hideElement("DIGITSSubtabButton");
 				if(player.DIGITS != [false,false,false] || player.u7) showElement("DIGITSSubtabButton");
 			if(player.DIGITS[0] == true) maxAllDigits();
+			if(player.DIGITS[1] == true) maxAllDigitUpgrades();
 			if(player.u7) showElement("DIGITS1button");
+			if(player.u8) showElement("DIGITS2button");
 			// These lines are here to enforce the display to match the stored variable.
 			for(var i=0;i<10;i++) {
 				update(i+"sDisplay",format(player.numbers[i],player.notation));
@@ -435,13 +447,14 @@
 				if(player.lastUpdate===undefined) player.lastUpdate = Date.now();
 				if (player.notation===undefined) player.notation=0; // Yes, you start in standard notation. Deal with it.
 				if(player.crosses===undefined) player.crosses = new Decimal(0);
-				if(player.numberUpgradeCosts===undefined) player.numberUpgradeCosts = [new Decimal(1),new Decimal(3),new Decimal(5),new Decimal(10),new Decimal(50),new Decimal(100),new Decimal(5),new Decimal(50),new Decimal(100)];
+				if(player.numberUpgradeCosts===undefined) player.numberUpgradeCosts = [new Decimal(1),new Decimal(3),new Decimal(5),new Decimal(10),new Decimal(50),new Decimal(100),new Decimal(5),new Decimal(50),new Decimal(500)];
 				if(player.u1===undefined) player.u1 = new Decimal(1);
 				if(player.u2===undefined) player.u2 = false;
 				if(player.u3===undefined) player.u3 = false;
 				if(player.u4===undefined) player.u4 = false;
 				if(player.u5===undefined) player.u5 = false;
 				if(player.u7===undefined) player.u7 = false;
+				if(player.u8===undefined) player.u8 = false;
 				if(player.DIGITS===undefined) player.DIGITS = [false,false,false]
 				
 				// Convert save to decimal
@@ -637,8 +650,8 @@
 				</tr>
 				<tr>
 					<td><button id="u7button" onclick="buyNumberUpgrade(7)">Install Digit Buy D.I.G.I.T.S.<br>Cost: 5 crosses.</button></td>
-					<td><button>Install Digit Upgrade d.I.G.I.T.S.<br>Cost: 50 crosses.</button></td>
-					<td><button>Install Digit Add d.I.G.I.T.S.<br>Cost: 100 crosses.</button></td>
+					<td><button id="u8button" onclick="buyNumberUpgrade(8)">Install Digit Upgrade d.I.G.I.T.S.<br>Cost: 50 crosses.</button></td>
+					<td><button>Install Digit Add d.I.G.I.T.S.<br>Cost: 500 crosses.</button></td>
 				</tr>
 			</table>
 			</div>
