@@ -144,6 +144,7 @@
 			u6:new Decimal(1),
 			u7:false,
 			u8:false,
+			u9:false,
 			DIGITS:[false,false,false] // states of the 3 D.I.G.I.T.S. (false = disabled, true = enabled)
 		}
 		
@@ -181,6 +182,7 @@
 				player.u6 = new Decimal(1)
 				player.u7 = false
 				player.u8 = false
+				player.u9 = false
 			player.DIGITS = [false,false,false]
 			multiplicationSubtab = "upgrades" // take him out of D.I.G.I.T.S. tab
 			}
@@ -222,6 +224,13 @@
 			}
 			resetPlayer(1) // reset digits
 			hideElement("addButton")
+		}
+
+	function maybeAddDigits(i) { // add digits if he will gain at least i pluses. Used by D.I.G.I.T.S. code in tick
+			if(i < 1) i = 1; // prevent weirdness from happening
+			i = new Decimal(i);
+			if(getPluses().gte(i)) addDigits();
+			else return 0; // function failed this time
 		}
 
 		function upgradeDigit(i) {
@@ -351,7 +360,11 @@
 				break;
 				
 				case 9:
-				//TBA
+				if(player.u9) return 0; // already bought it once; don't do anything if he clicks it again
+				if(player.numberUpgradeCosts[8].gt(player.crosses)) return 0; // can't buy it
+				player.crosses = player.crosses.subtract(player.numberUpgradeCosts[8]);
+				player.u9 = true;
+				showElement("DIGITS3button");
 				break;
 			}
 		}
@@ -383,8 +396,10 @@
 				if(player.DIGITS != [false,false,false] || player.u7) showElement("DIGITSSubtabButton");
 			if(player.DIGITS[0] == true) maxAllDigits();
 			if(player.DIGITS[1] == true) maxAllDigitUpgrades();
+			if(player.DIGITS[2] == true) maybeAddDigits(document.getElementById("minPlusesToBeGained").value);
 			if(player.u7) showElement("DIGITS1button");
 			if(player.u8) showElement("DIGITS2button");
+			if(player.u9) showElement("DIGITS3button");
 			// These lines are here to enforce the display to match the stored variable.
 			for(var i=0;i<10;i++) {
 				update(i+"sDisplay",format(player.numbers[i],player.notation));
@@ -470,6 +485,7 @@
 				if(player.u6===undefined) player.u6 = new Decimal(1);
 				if(player.u7===undefined) player.u7 = false;
 				if(player.u8===undefined) player.u8 = false;
+				if(player.u9===undefined) player.u9 = false;
 				if(player.DIGITS===undefined) player.DIGITS = [false,false,false]
 				
 				// Convert save to decimal
@@ -667,7 +683,7 @@
 				<tr>
 					<td><button id="u7button" onclick="buyNumberUpgrade(7)">Install Digit Buy D.I.G.I.T.S.<br>Cost: 5 crosses.</button></td>
 					<td><button id="u8button" onclick="buyNumberUpgrade(8)">Install Digit Upgrade d.I.G.I.T.S.<br>Cost: 50 crosses.</button></td>
-					<td><button>Install Digit Add d.I.G.I.T.S.<br>Cost: 500 crosses.</button></td>
+					<td><button id="u9button" onclick="buyNumberUpgrade(9)">Install Digit Add d.I.G.I.T.S.<br>Cost: 500 crosses.</button></td>
 				</tr>
 			</table>
 			</div>
@@ -675,6 +691,7 @@
 				<button id="DIGITS1button" onclick="toggleDIGITS(1)" style="display:none">Digit Buy D.I.G.I.T.S.: <span id="DIGITS1display">Disabled</span></button>
 				<button id="DIGITS2button" onclick="toggleDIGITS(2)" style="display:none">Digit Upgrade D.I.G.I.T.S.: <span id="DIGITS2display">Disabled</span></button>
 				<button id="DIGITS3button" onclick="toggleDIGITS(3)" style="display:none">Digit Add D.I.G.I.T.S.: <span id="DIGITS3display">Disabled</span></button>
+			<span id="DIGITS3info">Amount of pluses needed to reset: <input id="minPlusesToBeGained">1</input></span>
 			</div>
 		</div>
 <a style = "position: absolute; left: 20; bottom: 20" href="https://discord.gg/RR2kv5">Discord</a>
