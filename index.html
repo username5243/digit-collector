@@ -1,4 +1,20 @@
 <html>
+	<style>
+	
+	button {
+		transition-duration: 0.2s;
+	}
+		
+	.available {
+		opacity: 1;
+	}
+		
+	.unavailable {
+		opacity: 0.5;
+	}
+	
+	</style>
+	
 	<head>
 		<title>Digit Collector</title>
 		<script type="text/javascript" src="logarithmica_numerus_lite.js"></script>
@@ -23,7 +39,15 @@
 			showElement(tabName)
 			tab=tabName
 		}
-			
+
+		var multiplicationSubtab="upgrades"
+
+		function switchMultiplicationSubtab(tabName) {
+			hideElement(multiplicationSubtab)
+			showElement(tabName)
+			multiplicationSubtab=tabName
+		}
+
 		function decimalArray(length, value, multiplier) {
 			a = []
 			
@@ -34,22 +58,38 @@
 			return a
 		}
 
-		function abbreviate(i) { // get standard notation abbreviation for the i-th illion. (Currently only works properly to i = 999.)
-		if(i==0) return "K";
+		function abbreviate(i) { // get standard notation abbreviation for the i-th illion.
+			if(i==0) return "K";
 			if(i==1) return "M";
 			if(i==2) return "B";
 			var units = ["","U","Du","T","Qa","Qt","Sx","Sp","O","N"];
 			var tens = ["","Dc","Vg","Tg","Qd","Qi","Se","St","Og","Nn"];
-			var hundreds = ["","Ce","Dn","Tc","Qe","Qu","Sc","Si","Oe","Ne"]
+			var hundreds = ["","Ce","Dn","Tc","Qe","Qu","Sc","Si","Oe","Ne"];
 			var i2 = Math.floor(i/10);
 			var i3 = Math.floor(i2/10);
 			var unit = units[i%10];
 			var ten = tens[i2%10];
 			var hundred = hundreds[i3%10];
-			return unit+ten+hundred;
+			
+			// -illions greater than 999
+			
+			var mi = Math.floor((i%1e6)/1e3);
+			var mc = Math.floor((i%1e9)/1e6);
+			var na = Math.floor((i%1e12)/1e9);
+			var pc = Math.floor((i%1e15)/1e12);
+			var fm = Math.floor((i%1e18)/1e15);
+			
+			var ret = "";
+			if(pc > 0) ret += abbreviate(pc) + "PC-";
+			if(na > 0) ret += abbreviate(na) + "NA-";
+			if(mc > 0) ret += abbreviate(mc) + "MC-";
+			if(mi > 0) ret += abbreviate(mi) + "MI-";
+			ret += unit+ten+hundred;
+			
+			return ret;
 		}
 
-		function format(a,n) { // format number a in notation n (see var notationArray for a list of notations
+		function format(a,n=player.notation) { // format number a in notation n (see var notationArray for a list of notations
 			a = new Decimal(a); // make it a Decimal, if it isn't already.
 			if (a.lt(10)) return a.toFixed(3);
 			if (a.lt(100)) return a.toFixed(2);
@@ -57,19 +97,22 @@
 			var m = Math.round(1000*Math.pow(10,a.log10()-Math.floor(a.log10())))/1000; // mantissa of number, rounded to three decimal places
 			var e = Math.floor(a.log10()); // exponent of number
 			if (m>9.9995) { // would this mantissa cause the value to round up to 10.000? If so, prevent it.
-		m = 1;
-		e++;
-	}
-			if (n==1) return m+"e"+e; // scientific notation
-			if (n==3) return "e"+Math.round(1000*a.log10())/1000; // logarithm notation
-			var e2 = 3*Math.floor(e/3);
-			var m2 = Math.round(1000*m*Math.pow(10,e-e2))/1000; // values for standard and engineering
-			if(n==0) return m2+abbreviate(e2/3-1);
-			if(n==2) return m2+"e"+e2;
-				if(n==4) { // mixed scientific notation
-			if(a.lt(1e33)) return format(a,0);
-			else return format(a,1);
+				m = 1;
+				e++;
 			}
+			
+			var e2 = 3*Math.floor(e/3);
+			var m2 = (m*Math.pow(10,e-e2)).toFixed(3+e2-e); // values for standard and engineering
+			
+			if (n==0) return m2+abbreviate(e2/3-1); // standard notation
+			if (n==1) return m+"e"+e; // scientific notation
+			if (n==2) return m2+"e"+e2;
+			if (n==3) return "e"+a.log10().toFixed(3); // logarithm notation
+			if (n==4) { // mixed scientific notation
+				if(a.lt(1e33)) return format(a,0);
+				else return format(a,1);
+			}
+			if (n==5) return "ee"+Decimal.log10(Math.max(a.log10(), 1)).toFixed(5)
 		}
 
 		function format2(a,n) { // Format while removing decimal places.
@@ -85,14 +128,29 @@
 			digitCosts:decimalArray(10, 10, 1),
 			digitMults:decimalArray(10, 1, 0.5),
 			digitUpgradeCosts:decimalArray(10, 1, 8),
+			digitUpgradeAmounts:decimalArray(10, 0, 0),
 			pluses:new Decimal(0),
 			digitShifts:0,
 			nextDigit:1,
 			digitShiftCost:new Decimal(4),
-			notation:0
+			notation:0,
+			crosses:new Decimal(0),
+			numberUpgradeCosts:[new Decimal(1),new Decimal(3),new Decimal(5),new Decimal(10),new Decimal(50),new Decimal(100),new Decimal(5),new Decimal(50),new Decimal(500)],
+			u1:new Decimal(1),
+			u2:false,
+			u3:false,
+			u4:false,
+			u5:false,
+			u6:new Decimal(1),
+			u7:false,
+			u8:false,
+			u9:false,
+			DIGITS:[false,false,false] // states of the 3 D.I.G.I.T.S. (false = disabled, true = enabled)
 		}
 		
 		function resetPlayer(layers) {
+			var digitShiftEffect = new Decimal(0.5); // starting mult of each digit compared to previous one
+			if(player.u3) digitShiftEffect = new Decimal(0.55);
 			if(layers >= 1) { // reset digits
 				player.numbers = decimalArray(10, 10, 1)
 				player.nps = decimalArray(10, 0, 0)
@@ -100,12 +158,33 @@
 				player.digitCosts = decimalArray(10, 10, 1)
 			}
 			if(layers >= 2) { // reset addition
-				player.digitMults = decimalArray(10, 1, 0.5)
+				player.digitMults = decimalArray(10, player.u1, digitShiftEffect) // keeps affects of number upgrades, but not digit upgrades
 				player.digitUpgradeCosts = decimalArray(10, 1, 8)
+				player.digitUpgradeAmounts = decimalArray(10, 0, 0)
 				player.pluses = new Decimal(0)
 				player.digitShifts = 0
+				if(player.u5) player.digitShifts = 9
 				player.nextDigit = 1
+				if(player.u5) player.nextDigit = 10
 				player.digitShiftCost = new Decimal(4)
+			}
+			if(layers >= 3) { // reset multiplication
+				player.digitMults = decimalArray(10, 1, 0.5)
+				player.digitShifts = 0
+				player.nextDigit = 1
+				player.crosses = new Decimal(0)
+				player.numberUpgradeCosts = [new Decimal(1),new Decimal(3),new Decimal(5),new Decimal(10),new Decimal(50),new Decimal(100),new Decimal(5),new Decimal(50),new Decimal(500)]
+				player.u1 = new Decimal(1)
+				player.u2 = false
+				player.u3 = false
+				player.u4 = false
+				player.u5 = false
+				player.u6 = new Decimal(1)
+				player.u7 = false
+				player.u8 = false
+				player.u9 = false
+			player.DIGITS = [false,false,false]
+			multiplicationSubtab = "upgrades" // take him out of D.I.G.I.T.S. tab
 			}
 		}
 
@@ -115,6 +194,7 @@
 			player.digitCosts[i] = player.digitCosts[i].multiply(2); // make the next digit cost more
 			player.digitAmounts[i] = player.digitAmounts[i].add(1); // one more digit
 			player.nps[i] = player.digitAmounts[i].multiply(player.digitMults[i]); // this will be how many numbers we get per tick
+			if(player.u2) player.digitMults[i] = player.digitMults[i].multiply(1.04); // apply the affects of number upgrade 2
 		}
 
 		function maxAllDigits() { // buys max of all unlocked digits.
@@ -126,27 +206,51 @@
 		}
 
 		function getPluses() { // code to determine how many pluses we should get when adding digits
-			var temp = new Decimal(1); // storage variable
+			var temp = new Decimal(player.u6); // storage variable
 			for(var i=0; i<player.nextDigit; i++) {
-				temp = temp.multiply(Decimal.pow(player.numbers[i].divide(1000),1/3).add(1))
+				temp = temp.multiply(Decimal.pow(player.numbers[i].divide(1000),new Decimal(1).divide(3)).add(1))
 			}
 			return temp.subtract(1).floor();
 		}
 
-		function addDigits() {
+		function addDigits() { // prestige 1
 			showElement("additionTabButton")
 			
 			player.pluses = player.pluses.add(getPluses()); // give player gained pluses
+			if(player.u2) { // if he has upgrade 2, make sure to reset mults from it.
+				for(var i=0; i<=player.digitShifts; i++) {
+					player.digitMults[i] = player.digitMults[i].divide(Decimal.pow(1.04,player.digitAmounts[i]));
+				}
+			}
 			resetPlayer(1) // reset digits
 			hideElement("addButton")
 		}
 
+	function maybeAddDigits(i) { // add digits if he will gain at least i pluses. Used by D.I.G.I.T.S. code in tick
+			if(i < 1) i = 1; // prevent weirdness from happening
+			i = new Decimal(i);
+			if(getPluses().gte(i)) addDigits();
+			else return 0; // function failed this time
+		}
+
 		function upgradeDigit(i) {
+			var upgradeEffect = new Decimal(2);
+			if(player.u4) upgradeEffect = new Decimal(2.25);
 			if(player.digitUpgradeCosts[i].gt(player.pluses)) return 0; // Can't buy
 			player.pluses = player.pluses.subtract(player.digitUpgradeCosts[i]);
-			player.digitMults[i] = player.digitMults[i].multiply(2);
+			player.digitMults[i] = player.digitMults[i].multiply(upgradeEffect);
+			player.digitUpgradeAmounts[i] = player.digitUpgradeAmounts[i].add(1);
 			player.digitUpgradeCosts[i] = player.digitUpgradeCosts[i].multiply(Decimal.pow(2,i+1));
+			if(player.digitUpgradeAmounts[i].gte(15)) player.digitUpgradeCosts[i] = player.digitUpgradeCosts[i].multiply(Decimal.pow(2,player.digitUpgradeAmounts[i].subtract(15)));
 			player.nps[i] = player.nps[i].multiply(2);
+		}
+
+		function maxAllDigitUpgrades() { // buys max upgrades of all digits. Prioritizes lower digits over higher ones so as to get the single biggest multiplier to overall production (and thus, gain of pluses).
+			for(var i=0; i<=player.digitShifts; i++) {
+				while(player.pluses.gte(player.digitUpgradeCosts[i])) {
+					upgradeDigit(i);
+				}
+			}
 		}
 
 		function digitShift() {
@@ -159,19 +263,143 @@
 			player.nextDigit++;
 		}
 
+		function multiplyNumbers() { // prestige 2
+			showElement("multiplicationTabButton");
+			hideElement("additionTabButton");
+			for(var i=1; i<=9; i++) {
+				hideElement("d"+i+"row");
+			}
+			
+			player.crosses = player.crosses.add(Decimal.pow(player.pluses.divide(1e6),0.5).floor());
+			resetPlayer(2) // reset digits and addition content
+			hideElement("addButton");
+			hideElement("multiplyButton");
+		}
+
+		function buyNumberUpgrade(i) { // buys number upgrade i.
+			switch(i) { 
+				// n what follows, there should be one case for each number upgrade in the game (9 total). 
+				
+				case 1:
+				if(player.numberUpgradeCosts[0].gt(player.crosses)) return 0; // can't buy it
+				player.crosses = player.crosses.subtract(player.numberUpgradeCosts[0]);
+				player.u1 = player.u1.multiply(1.5);
+				for(var i=0; i<=9; i++) {
+					player.digitMults[i] = player.digitMults[i].multiply(1.5); // update all digit multipliers
+				}
+				player.numberUpgradeCosts[0] = player.numberUpgradeCosts[0].multiply(8); // increase cost
+				update("u1Display",format(player.u1));
+				break;
+				
+				case 2:
+				if(player.u2) return 0; // already bought it once; don't do anything if he clicks it again
+				if(player.numberUpgradeCosts[1].gt(player.crosses)) return 0; // can't buy it
+				player.crosses = player.crosses.subtract(player.numberUpgradeCosts[1]);
+				player.u2 = true;
+				for(var i=0; i<=player.digitShifts; i++) {
+					player.digitMults[i] = player.digitMults[i].multiply(Decimal.pow(1.04,player.digitAmounts[i])); // in case he bought it mid-run, apply retroactively.
+				}
+				break;
+				
+				case 3:
+				if(player.u3) return 0; // already bought it once; don't do anything if he clicks it again
+				if(player.numberUpgradeCosts[2].gt(player.crosses)) return 0; // can't buy it
+				player.crosses = player.crosses.subtract(player.numberUpgradeCosts[2]);
+				player.u3 = true;
+				for(var i=1; i<=9; i++) {
+					player.digitMults[i] = player.digitMults[i].multiply(Decimal.pow(1.1,i)); // apply to current multiply
+				}
+				break;
+				
+				case 4:
+				if(player.u4) return 0; // already bought it once; don't do anything if he clicks it again
+				if(player.numberUpgradeCosts[3].gt(player.crosses)) return 0; // can't buy it
+				player.crosses = player.crosses.subtract(player.numberUpgradeCosts[3]);
+				player.u4 = true;
+				for(var i=0; i<=9; i++) {
+					player.digitMults[i] = player.digitMults[i].multiply(Decimal.pow(1.125,player.digitUpgradeAmounts[i])); // in case he bought it mid-run
+				}
+				break;
+				
+				case 5:
+				if(player.u5) return 0; // already bought it once; don't do anything if he clicks it again
+				if(player.numberUpgradeCosts[4].gt(player.crosses)) return 0; // can't buy it
+				player.crosses = player.crosses.subtract(player.numberUpgradeCosts[4]);
+				player.u5 = true;
+				player.digitShifts = 9
+				player.nextDigit = 10
+				hideElement("digitShiftInfo")
+				for(var i=0; i<=9; i++) {
+					showElement("d"+i+"row","table-row")
+					showElement("d"+i+"UpgradeButton");
+				}
+				break;
+				
+				case 6:
+				if(player.numberUpgradeCosts[5].gt(player.crosses)) return 0; // can't buy it
+				player.crosses = player.crosses.subtract(player.numberUpgradeCosts[5]);
+				player.u6 = player.u6.multiply(2);
+				player.numberUpgradeCosts[5] = player.numberUpgradeCosts[5].multiply(4); // increase cost
+				update("u6Display",format(player.u6));
+				break;
+				
+				case 7:
+				if(player.u7) return 0; // already bought it once; don't do anything if he clicks it again
+				if(player.numberUpgradeCosts[6].gt(player.crosses)) return 0; // can't buy it
+				player.crosses = player.crosses.subtract(player.numberUpgradeCosts[6]);
+				player.u7 = true;
+				showElement("DIGITS1button");
+				break;
+				
+				case 8:
+				if(player.u8) return 0; // already bought it once; don't do anything if he clicks it again
+				if(player.numberUpgradeCosts[7].gt(player.crosses)) return 0; // can't buy it
+				player.crosses = player.crosses.subtract(player.numberUpgradeCosts[7]);
+				player.u8 = true;
+				showElement("DIGITS2button");
+				break;
+				
+				case 9:
+				if(player.u9) return 0; // already bought it once; don't do anything if he clicks it again
+				if(player.numberUpgradeCosts[8].gt(player.crosses)) return 0; // can't buy it
+				player.crosses = player.crosses.subtract(player.numberUpgradeCosts[8]);
+				player.u9 = true;
+				showElement("DIGITS3button");
+				break;
+			}
+		}
+
+		function toggleDIGITS(i) {
+			player.DIGITS[i-1] = !player.DIGITS[i-1];
+		}
+
 		function tick(t) {
-			diff = Date.now() - player.lastUpdate;
+			var diff = new Decimal(Date.now() - player.lastUpdate);
 			player.lastUpdate = Date.now();
 			
 			for(var i=0; i<10; i++) {
-				player.numbers[i] = player.numbers[i].add(player.nps[i].multiply(diff/1000));
+				player.numbers[i] = player.numbers[i].add(player.nps[i].multiply(diff.divide(1000)));
 			}
 			if(player.numbers[0].lt(1000)) hideElement("addButton")
 			else {
 				showElement("addButton");
 				update("plusesToBeGained",format2(getPluses(),player.notation));
 			}
+			if(player.pluses.lt(1e6)) hideElement("multiplyButton")
+			else {
+				showElement("multiplyButton");
+				update("crossesToBeGained",format2(Decimal.pow(player.pluses/1000000,0.5).floor(),player.notation));
+			}
 			if(player.pluses.gt(0) || player.digitMults[0].gt(1)) showElement("additionTabButton");
+			if(player.crosses.gt(0) || player.u1.gt(1)) showElement("multiplicationTabButton");
+				if(player.DIGITS == [false,false,false] && player.u7 == false) hideElement("DIGITSSubtabButton");
+				if(player.DIGITS != [false,false,false] || player.u7) showElement("DIGITSSubtabButton");
+			if(player.DIGITS[0] == true) maxAllDigits();
+			if(player.DIGITS[1] == true) maxAllDigitUpgrades();
+			if(player.DIGITS[2] == true) maybeAddDigits(document.getElementById("minPlusesToBeGained").value);
+			if(player.u7) showElement("DIGITS1button");
+			if(player.u8) showElement("DIGITS2button");
+			if(player.u9) showElement("DIGITS3button");
 			// These lines are here to enforce the display to match the stored variable.
 			for(var i=0;i<10;i++) {
 				update(i+"sDisplay",format(player.numbers[i],player.notation));
@@ -179,12 +407,33 @@
 				update("d"+i+"costDisplay",format2(player.digitCosts[i],player.notation));
 				update("d"+i+"multDisplay",format(player.digitMults[i],player.notation));
 				update("d"+i+"UpgradeCostDisplay",format2(player.digitUpgradeCosts[i],player.notation));
+				showElement("d"+i+"row", player.digitShifts < i ? "none" : "table-row");
+				showElement("d"+i+"UpgradeButton", player.digitShifts < i ? "none" : null);
 			}
 			update("plusesDisplay",format2(player.pluses,player.notation));
 			update("digitShiftsDisplay",player.digitShifts);
 			update("nextDigitDisplay",player.nextDigit);
 			update("digitShiftCostDisplay",format2(player.digitShiftCost,player.notation));
 			if(player.nextDigit >= 10) hideElement("digitShiftButton"); // 9 is the last digit shift
+			update("crossesDisplay",format2(player.crosses,player.notation));
+			update("u1costDisplay",format2(player.numberUpgradeCosts[0],player.notation)); 
+			update("u6costDisplay",format2(player.numberUpgradeCosts[5],player.notation)); 
+			if(player.u5) hideElement("digitShiftInfo")
+			if(!player.u5) hideElement("digitShiftInfo")
+			// only upgrades 1 and 6 should ever change cost.
+			update("u1Display",format(player.u1,player.notation));
+			update("u6Display",format(player.u6,player.notation));
+			
+			// Update UI
+			
+			for(var i = 0; i < 10; i++) {
+				document.getElementById("d" + i + "button").className = player.digitCosts[i].lte(player.numbers[i]) ? "available" : "unavailable"
+				document.getElementById("d" + i + "UpgradeButton").className = player.digitUpgradeCosts[i].lte(player.pluses) ? "available" : "unavailable"
+			}
+			for(var i = 1; i <= 3; i++) {
+				if(player.DIGITS[i-1]==false) update("DIGITS"+i+"display","Disabled");
+				if(player.DIGITS[i-1]==true) update("DIGITS"+i+"display","Enabled");
+			}
 		}
 
 		function hardReset() {
@@ -195,13 +444,13 @@
 			}
 		}
 
-		var notationArray = ["Standard","Scientific","Engineering","Logarithm","Mixed scientific"]; // list of implemented notations, used by the next function
+		var notationArray = ["Standard","Scientific","Engineering","Logarithm","Mixed scientific","Double-logarithm"]; // list of implemented notations, used by the next function
 
 		function switchNotation() {
 			player.notation++;
 			if(player.notation>notationArray.length-1) player.notation=0;
 			update("notationDisplay",notationArray[player.notation]);
-}
+		}
 
 		function save() {
 			localStorage.setItem('DCSave',btoa(JSON.stringify(player)))
@@ -219,12 +468,25 @@
 				if(player.digitCosts===undefined) player.digitCosts = decimalArray(10, player.d0.cost, 0);
 				if(player.digitMults===undefined) player.digitMults = decimalArray(10, 1, 0.5);
 				if(player.digitUpgradeCosts===undefined) player.digitUpgradeCosts = decimalArray(10, 1, 8);
+				if(player.digitUpgradeAmounts===undefined) player.digitUpgradeAmounts = decimalArray(10, 0, 0); // won't calculate them retroactively to the current multiply. Not a big deal, and certainly won't be upon release because he can't have multiplied before the current release.
 				if(player.pluses===undefined) player.pluses = new Decimal(0);
 				if(player.digitShifts===undefined) player.digitShifts = 0;
 				if(player.nextDigit===undefined) player.nextDigit = 1;
 				if(player.digitShiftCost===undefined) player.digitShiftCost = new Decimal(4);
 				if(player.lastUpdate===undefined) player.lastUpdate = Date.now();
 				if (player.notation===undefined) player.notation=0; // Yes, you start in standard notation. Deal with it.
+				if(player.crosses===undefined) player.crosses = new Decimal(0);
+				if(player.numberUpgradeCosts===undefined) player.numberUpgradeCosts = [new Decimal(1),new Decimal(3),new Decimal(5),new Decimal(10),new Decimal(50),new Decimal(100),new Decimal(5),new Decimal(50),new Decimal(500)];
+				if(player.u1===undefined) player.u1 = new Decimal(1);
+				if(player.u2===undefined) player.u2 = false;
+				if(player.u3===undefined) player.u3 = false;
+				if(player.u4===undefined) player.u4 = false;
+				if(player.u5===undefined) player.u5 = false;
+				if(player.u6===undefined) player.u6 = new Decimal(1);
+				if(player.u7===undefined) player.u7 = false;
+				if(player.u8===undefined) player.u8 = false;
+				if(player.u9===undefined) player.u9 = false;
+				if(player.DIGITS===undefined) player.DIGITS = [false,false,false]
 				
 				// Convert save to decimal
 				
@@ -235,9 +497,16 @@
 					player.digitCosts[i] = new Decimal(player.digitCosts[i])
 					player.digitMults[i] = new Decimal(player.digitMults[i])
 					player.digitUpgradeCosts[i] = new Decimal(player.digitUpgradeCosts[i])
+					player.digitUpgradeAmounts[i] = new Decimal(player.digitUpgradeAmounts[i])
 				}
 				player.pluses = new Decimal(player.pluses)
 				player.digitShiftCost = new Decimal(player.digitShiftCost)
+				player.crosses = new Decimal(player.crosses)
+				for(var i = 0; i<=9; i++) {
+					player.numberUpgradeCosts[i] = new Decimal(player.numberUpgradeCosts[i]);
+				}
+				player.u1 = new Decimal(player.u1);
+				player.u6 = new Decimal(player.u6);
 				
 				// Update UI
 				
@@ -257,6 +526,7 @@
 				if(player.pluses.gt(0) || player.digitMults[0].gt(1)) {
 					showElement("additionTabButton");
 				}
+			if(player.u5) hideElement("digitShiftInfo")
 			} catch (e) {
 				console.log('Your save failed to load: '+e)
 			}
@@ -284,10 +554,12 @@
 		<div id = "header" style = "text-align: center; margin: 10px">
 			<button id="digitsTabButton" onclick="switchTab('digits')">Digits</button>
 			<button id="additionTabButton" style="display:none" onclick="switchTab('addition')">Addition</button>
+			<button id="multiplicationTabButton" style="display:none" onclick="switchTab('multiplication')">Multiplication</button>
 			<button id="optionsTabButton" onclick="switchTab('options')">Options</button>
 		</div>
 		<div id = "prestige" style = "text-align: center; margin: 10px">
-			<button id="addButton" style="display:none" onclick="addDigits()">Add your digits to boost your production.<br>Gain <span id="plusesToBeGained">1</span> pluses.</div></button>
+			<button id="addButton" style="display:none" onclick="addDigits()">Add your digits to boost your production.<br>Gain <span id="plusesToBeGained">1</span> pluses.</button>
+			<button id="multiplyButton" style="display:none" onclick="multiplyNumbers()">Multiply your numbers to gain upgrades.<br>Gain <span id="crossesToBeGained">1</span> crosses.</button>
 		</div>
 		<div id="digits">
 			<button id="maxAllButton" onclick="maxAllDigits()">Max all</button>
@@ -370,6 +642,7 @@
 		</div>
 		<div style="display:none" id="addition">
 			<p>You have <span id="plusesDisplay" style = "font-size: 24">0</span> pluses.
+			<button id="maxUpgradesButton" onclick="maxAllDigitUpgrades()">Max all</button>
 			<table>
 				<tr>
 					<td><button id="d0UpgradeButton" onclick="upgradeDigit(0)">Double digit 0 production.<br>Current bonus: x<span id="d0multDisplay">1</span>.<br>Cost: <span id="d0UpgradeCostDisplay">1</span> pluses.</button></td>
@@ -377,6 +650,8 @@
 					<td><button id="d2UpgradeButton" onclick="upgradeDigit(2)" style="display:none">Double digit 2 production.<br>Current bonus: x<span id="d2multDisplay">0.25</span>.<br>Cost: <span id="d2UpgradeCostDisplay">64</span> pluses.</button></td>
 					<td><button id="d3UpgradeButton" onclick="upgradeDigit(3)" style="display:none">Double digit 3 production.<br>Current bonus: x<span id="d3multDisplay">0.125</span>.<br>Cost: <span id="d3UpgradeCostDisplay">512</span> pluses.</button></td>
 					<td><button id="d4UpgradeButton" onclick="upgradeDigit(4)" style="display:none">Double digit 4 production.<br>Current bonus: x<span id="d4multDisplay">0.063</span>.<br>Cost: <span id="d4UpgradeCostDisplay">4096</span> pluses.</button></td>
+				</tr>
+				<tr>
 					<td><button id="d5UpgradeButton" onclick="upgradeDigit(5)" style="display:none">Double digit 5 production.<br>Current bonus: x<span id="d5multDisplay">0.031</span>.<br>Cost: <span id="d5UpgradeCostDisplay">32768</span> pluses.</button></td>
 					<td><button id="d6UpgradeButton" onclick="upgradeDigit(6)" style="display:none">Double digit 6 production.<br>Current bonus: x<span id="d6multDisplay">0.016</span>.<br>Cost: <span id="d6UpgradeCostDisplay">262144</span> pluses.</button></td>
 					<td><button id="d7UpgradeButton" onclick="upgradeDigit(7)" style="display:none">Double digit 7 production.<br>Current bonus: x<span id="d7multDisplay">0.008</span>.<br>Cost: <span id="d7UpgradeCostDisplay">2097152</span> pluses.</button></td>
@@ -384,9 +659,43 @@
 					<td><button id="d9UpgradeButton" onclick="upgradeDigit(9)" style="display:none">Double digit 9 production.<br>Current bonus: x<span id="d9multDisplay">0.002</span>.<br>Cost: <span id="d9UpgradeCostDisplay">134217768</span> pluses.</button>
 				</tr></td>
 			</table>
+			<div id="digitShiftInfo">
 			<p>You have done <span id="digitShiftsDisplay" style = "font-size: 24">0</span> digit shifts.<br>
 			<button id="digitShiftButton" onclick="digitShift()">Unlock digit <span id="nextDigitDisplay">1</span>.<br>Cost: <span id="digitShiftCostDisplay">4</span> pluses.</button>
+			</div>
 		</div>
+		<div style="display:none" id="multiplication">
+			<p>You have <span id="crossesDisplay" style = "font-size: 24">0</span> crosses.
+			<button id="upgradesSubtabButton" onclick="switchMultiplicationSubtab('upgrades')">Number Upgrades</button>
+			<button id="DIGITSSubtabButton" onclick="switchMultiplicationSubtab('autobuyers')" style="display:none">D.I.G.I.T.S.</button>
+			<div id="upgrades">
+				<table>
+					<tr>
+						<td><button id="u1button" onclick="buyNumberUpgrade(1)">All digits produce 1.5x faster.<br>Current boost: x<span id="u1Display">1</span>.<br>Cost: <span id="u1costDisplay">1</span> crosses.</button></td>
+						<td><button id="u2button" onclick="buyNumberUpgrade(2)">Each digit gains a 1.04x production multiplier for each of that digit you buy.<br>Cost: 3 crosses.</button></td>
+						<td><button id="u3button" onclick="buyNumberUpgrade(3)">Each subsequent digit is 0.55x as strong as the previous instead of 0.5x.<br>Cost: 5 crosses.</button></td>
+				</tr>
+				<tr>
+						<td><button id="u4button" onclick="buyNumberUpgrade(4)">Digit upgrades make digits 2.25x faster instead of 2x.<br>Cost: 10 crosses.</button></td>
+						<td><button id="u5button" onclick="buyNumberUpgrade(5)">You start with all digits unlocked after multiplication.<br>Cost: 50 crosses.</button></td>
+						<td><button id="u6button" onclick="buyNumberUpgrade(6)">You gain 2x more pluses.<br>Current boost: x<span id="u6Display">1</span>.<br>Cost: <span id="u6costDisplay">100</span> crosses.</button></td>
+				</tr>
+				<tr>
+					<td><button id="u7button" onclick="buyNumberUpgrade(7)">Install Digit Buy D.I.G.I.T.S.<br>Cost: 5 crosses.</button></td>
+					<td><button id="u8button" onclick="buyNumberUpgrade(8)">Install Digit Upgrade d.I.G.I.T.S.<br>Cost: 50 crosses.</button></td>
+					<td><button id="u9button" onclick="buyNumberUpgrade(9)">Install Digit Add d.I.G.I.T.S.<br>Cost: 500 crosses.</button></td>
+				</tr>
+			</table>
+			</div>
+			<div id="autobuyers">
+				<button id="DIGITS1button" onclick="toggleDIGITS(1)" style="display:none">Digit Buy D.I.G.I.T.S.: <span id="DIGITS1display">Disabled</span></button>
+				<button id="DIGITS2button" onclick="toggleDIGITS(2)" style="display:none">Digit Upgrade D.I.G.I.T.S.: <span id="DIGITS2display">Disabled</span></button>
+				<button id="DIGITS3button" onclick="toggleDIGITS(3)" style="display:none">Digit Add D.I.G.I.T.S.: <span id="DIGITS3display">Disabled</span></button>
+			<span id="DIGITS3info">Amount of pluses needed to reset: <input id="minPlusesToBeGained">1</input></span>
+			</div>
+		</div>
+<a href="howto.html">How To Play</a>
+<a href="about.html">About</a>
 <a style = "position: absolute; left: 20; bottom: 20" href="https://discord.gg/RR2kv5">Discord</a>
 	</body>
 </html>
