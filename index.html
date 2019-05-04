@@ -419,7 +419,7 @@
 			update("u1costDisplay",format2(player.numberUpgradeCosts[0],player.notation)); 
 			update("u6costDisplay",format2(player.numberUpgradeCosts[5],player.notation)); 
 			if(player.u5) hideElement("digitShiftInfo")
-			if(!player.u5) hideElement("digitShiftInfo")
+			if(!player.u5) showElement("digitShiftInfo")
 			// only upgrades 1 and 6 should ever change cost.
 			update("u1Display",format(player.u1,player.notation));
 			update("u6Display",format(player.u6,player.notation));
