@@ -133,6 +133,7 @@
 			digitShifts:0,
 			nextDigit:1,
 			digitShiftCost:new Decimal(4),
+			additions:0,
 			notation:0,
 			crosses:new Decimal(0),
 			numberUpgradeCosts:[new Decimal(1),new Decimal(3),new Decimal(5),new Decimal(10),new Decimal(50),new Decimal(100),new Decimal(5),new Decimal(50),new Decimal(500)],
@@ -145,7 +146,11 @@
 			u7:false,
 			u8:false,
 			u9:false,
-			DIGITS:[false,false,false] // states of the 3 D.I.G.I.T.S. (false = disabled, true = enabled)
+			DIGITS:[false,false,false] // states of the 3 D.I.G.I.T.S. (false = disabled, true = enabled),
+			multiplications:0,
+			achievements:[],
+			achievementsByRow:[0,0,0,]; //achievements completed on each row.
+			achPowers:decimalArray(10, 1, 1) // Digit boosts from achievements that are kept permanently
 		}
 		
 		function resetPlayer(layers) {
@@ -159,6 +164,9 @@
 			}
 			if(layers >= 2) { // reset addition
 				player.digitMults = decimalArray(10, player.u1, digitShiftEffect) // keeps affects of number upgrades, but not digit upgrades
+				for(var i=0; i<10; i++) {
+					player.digitMults[i] = player.digitMults[i].multiply(player.achPowers[i]); // multiply by achievement bonuses
+				}
 				player.digitUpgradeCosts = decimalArray(10, 1, 8)
 				player.digitUpgradeAmounts = decimalArray(10, 0, 0)
 				player.pluses = new Decimal(0)
@@ -167,9 +175,10 @@
 				player.nextDigit = 1
 				if(player.u5) player.nextDigit = 10
 				player.digitShiftCost = new Decimal(4)
+				player.additions = 0
 			}
 			if(layers >= 3) { // reset multiplication
-				player.digitMults = decimalArray(10, 1, 0.5)
+				player.digitMults = decimalArray(10, 1, 0.5) // don't take achievements into account, as prestige layers 3+ are not yet implemented. (The onlyway to trigger this condition as of now is to hard reset)
 				player.digitShifts = 0
 				player.nextDigit = 1
 				player.crosses = new Decimal(0)
@@ -185,7 +194,29 @@
 				player.u9 = false
 			player.DIGITS = [false,false,false]
 			multiplicationSubtab = "upgrades" // take him out of D.I.G.I.T.S. tab
+				player.multiplications = 0
+				player.achievements = []
+				player.achievementsByRow = [0,0,0]
+				player.achPowers = new Decimal(10, 1, 1)
 			}
+		}
+
+		function getAchievement(r,c,id) // gets the c-th achievement on row r, starting from 0.
+			{
+			if(player.achievements.includes("r"+r+c) return false // he already earned this achievement, don't give duplicates
+			player.achievements.push("r"+r+c)
+			player.achievementsByRow[r]++;
+			for(var i=0; i<10; i++) {
+				player.achPowers[i] = player.achPowers[i].multiply(1.03);
+				if(player.achievementsByRow[r]==10) player.achPowers[i] = player.achPowers[i].multiply(1.5);
+			var rows = 0;
+			for(var i=0; i<player.achievementsByRow.length; i++) {
+				if(player.achievementsByRow[i] == 10) rows++;
+			}
+			update("achMultDisplay",format(Decimal.pow(1.03,player.achievements.length).multiply(Decimal.pow(1.5,rows))));
+			showElement("achievementUnlockedInfo")
+			update("achievementName",id)
+			return true; // function completed successfully
 		}
 
 		function buyDigit(i) {
@@ -195,6 +226,7 @@
 			player.digitAmounts[i] = player.digitAmounts[i].add(1); // one more digit
 			player.nps[i] = player.digitAmounts[i].multiply(player.digitMults[i]); // this will be how many numbers we get per tick
 			if(player.u2) player.digitMults[i] = player.digitMults[i].multiply(1.04); // apply the affects of number upgrade 2
+			if(i==0) getAchievement(0,0)
 		}
 
 		function maxAllDigits() { // buys max of all unlocked digits.
@@ -223,6 +255,7 @@
 				}
 			}
 			resetPlayer(1) // reset digits
+			player.additions++;
 			hideElement("addButton")
 		}
 
@@ -272,6 +305,7 @@
 			
 			player.crosses = player.crosses.add(Decimal.pow(player.pluses.divide(1e6),0.5).floor());
 			resetPlayer(2) // reset digits and addition content
+			player.multiplications++;
 			hideElement("addButton");
 			hideElement("multiplyButton");
 		}
@@ -423,6 +457,8 @@
 			// only upgrades 1 and 6 should ever change cost.
 			update("u1Display",format(player.u1,player.notation));
 			update("u6Display",format(player.u6,player.notation));
+			update("additionsDisplay",player.additions);
+			update("multiplicationsDisplay",player.multiplications);
 			
 			// Update UI
 			
@@ -473,6 +509,7 @@
 				if(player.digitShifts===undefined) player.digitShifts = 0;
 				if(player.nextDigit===undefined) player.nextDigit = 1;
 				if(player.digitShiftCost===undefined) player.digitShiftCost = new Decimal(4);
+				if(player.additions===undefined) player.additions = 0;
 				if(player.lastUpdate===undefined) player.lastUpdate = Date.now();
 				if (player.notation===undefined) player.notation=0; // Yes, you start in standard notation. Deal with it.
 				if(player.crosses===undefined) player.crosses = new Decimal(0);
@@ -487,6 +524,10 @@
 				if(player.u8===undefined) player.u8 = false;
 				if(player.u9===undefined) player.u9 = false;
 				if(player.DIGITS===undefined) player.DIGITS = [false,false,false]
+				if(player.multiplications===undefined) player.multiplications = 0;
+				if(player.achievements===undefined) player.achievements = [];
+				if(player.achievementsByRow===undefined) player.achievem = [0,0,0,];
+				if(player.achPowers===undefined) player.achievements = decimalArray(10,1,1);
 				
 				// Convert save to decimal
 				
@@ -498,6 +539,7 @@
 					player.digitMults[i] = new Decimal(player.digitMults[i])
 					player.digitUpgradeCosts[i] = new Decimal(player.digitUpgradeCosts[i])
 					player.digitUpgradeAmounts[i] = new Decimal(player.digitUpgradeAmounts[i])
+					player.achPowers[i] = new Decimal(player.achPowers[i]);
 				}
 				player.pluses = new Decimal(player.pluses)
 				player.digitShiftCost = new Decimal(player.digitShiftCost)
@@ -556,6 +598,8 @@
 			<button id="additionTabButton" style="display:none" onclick="switchTab('addition')">Addition</button>
 			<button id="multiplicationTabButton" style="display:none" onclick="switchTab('multiplication')">Multiplication</button>
 			<button id="optionsTabButton" onclick="switchTab('options')">Options</button>
+			<button id="statisticsTabButton" onclick="switchTab('statistics')">Statistics</button>
+			<button id="achievementsTabButton" onclick="switchTab('achievements')">Achievements</button>
 		</div>
 		<div id = "prestige" style = "text-align: center; margin: 10px">
 			<button id="addButton" style="display:none" onclick="addDigits()">Add your digits to boost your production.<br>Gain <span id="plusesToBeGained">1</span> pluses.</button>
@@ -640,6 +684,12 @@
    <button onclick="switchNotation()">Notation: <div id="notationDisplay">Standard</div></button>
 			<span id="exportInfo" style="display:none">Here is your export save:<input id="exportSave"></input></span>
 		</div>
+		<div id="statistics">
+			You have added digits <span id="additionsDisplay">0</span> times.<br>
+			You hav multiplied numbers <span id="multiplicationsDisplay">0</span> times.
+		<div id="achievements">
+			Your achievements currently give a x<span id="achMultDisplay>1</span> multiplier to all digits.<br>
+		</div>
 		<div style="display:none" id="addition">
 			<p>You have <span id="plusesDisplay" style = "font-size: 24">0</span> pluses.
 			<button id="maxUpgradesButton" onclick="maxAllDigitUpgrades()">Max all</button>
@@ -697,5 +747,9 @@
 <a href="howto.html">How To Play</a>
 <a href="about.html">About</a>
 <a style = "position: absolute; left: 20; bottom: 20" href="https://discord.gg/RR2kv5">Discord</a>
+		<div id="achievementUnlockedInfo" style="display:none">
+			You unlocked the achievement <span id="achievementName">name</div>.
+		<button onclick="hideElement("achievementUnlockedInfo")>Okay</button>
+		</div>
 	</body>
 </html>
