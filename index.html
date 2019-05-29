@@ -203,7 +203,7 @@
 
 		function getAchievement(r,c,id) // gets the c-th achievement on row r, starting from 0.
 			{
-			if(player.achievements.includes("r"+r+c) return false // he already earned this achievement, don't give duplicates
+			if(player.achievements.includes("r"+r+c)) return false // he already earned this achievement, don't give duplicates
 			player.achievements.push("r"+r+c)
 			player.achievementsByRow[r]++;
 			for(var i=0; i<10; i++) {
