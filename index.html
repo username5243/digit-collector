@@ -201,8 +201,7 @@
 			}
 		}
 
-		function getAchievement(r,c,id) // gets the c-th achievement on row r, starting from 0.
-			{
+		function getAchievement(r,c,id) { // gets the c-th achievement on row r, starting from 0.
 			if(player.achievements.includes("r"+r+c)) return false // he already earned this achievement, don't give duplicates
 			player.achievements.push("r"+r+c)
 			player.achievementsByRow[r]++;
@@ -212,6 +211,7 @@
 			var rows = 0;
 			for(var i=0; i<player.achievementsByRow.length; i++) {
 				if(player.achievementsByRow[i] == 10) rows++;
+				}
 			}
 			update("achMultDisplay",format(Decimal.pow(1.03,player.achievements.length).multiply(Decimal.pow(1.5,rows))));
 			showElement("achievementUnlockedInfo")
@@ -748,7 +748,7 @@
 <a href="about.html">About</a>
 <a style = "position: absolute; left: 20; bottom: 20" href="https://discord.gg/RR2kv5">Discord</a>
 		<div id="achievementUnlockedInfo" style="display:none">
-			You unlocked the achievement <span id="achievementName">name</div>.
+			You unlocked the achievement <span id="achievementName">name</span>.
 		<button onclick="hideElement("achievementUnlockedInfo")>Okay</button>
 		</div>
 	</body>
