@@ -527,7 +527,7 @@
 				if(player.multiplications===undefined) player.multiplications = 0;
 				if(player.achievements===undefined) player.achievements = [];
 				if(player.achievementsByRow===undefined) player.achievem = [0,0,0,];
-				if(player.achPowers===undefined) player.achievements = decimalArray(10,1,1);
+				if(player.achPowers===undefined) player.achPowers = decimalArray(10,1,1);
 				
 				// Convert save to decimal
 				
@@ -687,6 +687,7 @@
 		<div id="statistics">
 			You have added digits <span id="additionsDisplay">0</span> times.<br>
 			You hav multiplied numbers <span id="multiplicationsDisplay">0</span> times.
+		</div>
 		<div id="achievements">
 			Your achievements currently give a x<span id="achMultDisplay>1</span> multiplier to all digits.<br>
 		</div>
