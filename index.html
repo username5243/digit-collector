@@ -412,7 +412,7 @@
 			if(player.u7) showElement("DIGITS1button");
 			if(player.u8) showElement("DIGITS2button");
 			if(player.u9) showElement("DIGITS3button");
-			iif(player.u9) showElement("additionsSubtabButton");
+			if(player.u9) showElement("additionsSubtabButton");
 			// These lines are here to enforce the display to match the stored variable.
 			for(var i=0;i<10;i++) {
 				update(i+"sDisplay",format(player.numbers[i],player.notation));
