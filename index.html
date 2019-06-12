@@ -145,10 +145,12 @@
 			u7:false,
 			u8:false,
 			u9:false,
-			DIGITS:[false,false,false] // states of the 3 D.I.G.I.T.S. (false = disabled, true = enabled)
+			DIGITS:[false,false,false] // states of the 3 D.I.G.I.T.S. (false = disabled, true = enabled),
+			digitAdditionAmounts:decimalArray(10,0,0),
+			digitAdditionReqs:[new Decimal(40),new Decimal(37),new Decimal(34),new Decimal(31),new Decimal(28),new Decimal(25),new decimal(22),new Decimal(19),new decimal(16),new Decimal(13)]
 		}
 		
-		function resetPlayer(layers) {
+		function resetPlayer(layers) { // main prestige function. Argument is layer, with 1 being addition, and counting up from there. A number one higher than the current limit of the game will only apply on hard reset.
 			var digitShiftEffect = new Decimal(0.5); // starting mult of each digit compared to previous one
 			if(player.u3) digitShiftEffect = new Decimal(0.55);
 			if(layers >= 1) { // reset digits
@@ -167,6 +169,8 @@
 				player.nextDigit = 1
 				if(player.u5) player.nextDigit = 10
 				player.digitShiftCost = new Decimal(4)
+				player.digitAdditionAmounts = decimalArray(10,0,0)
+				player.digitadditionReqs = [new Decimal(40),new Decimal(37),new Decimal(34),new Decimal(31),new Decimal(28),new Decimal(25),new decimal(22),new Decimal(19),new decimal(16),new Decimal(13)]
 			}
 			if(layers >= 3) { // reset multiplication
 				player.digitMults = decimalArray(10, 1, 0.5)
@@ -208,7 +212,7 @@
 		function getPluses() { // code to determine how many pluses we should get when adding digits
 			var temp = new Decimal(player.u6); // storage variable
 			for(var i=0; i<player.nextDigit; i++) {
-				temp = temp.multiply(Decimal.pow(player.numbers[i].divide(1000),new Decimal(1).divide(3)).add(1))
+				temp = temp.multiply(Decimal.pow(player.numbers[i].divide(1000),new Decimal(5).add(player.digitAdditionAmounts[i]).divide(15)).add(1))
 			}
 			return temp.subtract(1).floor();
 		}
@@ -373,7 +377,15 @@
 			player.DIGITS[i-1] = !player.DIGITS[i-1];
 		}
 
-		function tick(t) {
+		function getDigitAddition(i) { // gets a digit i adition, if possible.
+			if(player.digitAmounts[i].gt(player.digitAdditionReqs[i]) return 0; // function fails
+			player.digitAmounts[i] = 0; // clear the existing amounts of the digit
+			player.digitMults[i] = player.digitMults[i].divide(Decimal.pow(1.04,player.digitAdditionReqs[i]));
+			player.digitAdditionReqs[i] = player.digitAdditionReqs[i].add(10);
+			player.digitAdditionAmounts[i] = player.digitAdditionAmounts[i].add(1);
+		}
+
+		function tick(t) { // The main game loop
 			var diff = new Decimal(Date.now() - player.lastUpdate);
 			player.lastUpdate = Date.now();
 			
@@ -400,6 +412,7 @@
 			if(player.u7) showElement("DIGITS1button");
 			if(player.u8) showElement("DIGITS2button");
 			if(player.u9) showElement("DIGITS3button");
+			iif(player.u9) showElement("additionsSubtabButton");
 			// These lines are here to enforce the display to match the stored variable.
 			for(var i=0;i<10;i++) {
 				update(i+"sDisplay",format(player.numbers[i],player.notation));
@@ -409,6 +422,11 @@
 				update("d"+i+"UpgradeCostDisplay",format2(player.digitUpgradeCosts[i],player.notation));
 				showElement("d"+i+"row", player.digitShifts < i ? "none" : "table-row");
 				showElement("d"+i+"UpgradeButton", player.digitShifts < i ? "none" : null);
+				showElement("d"+i+"additions");
+			update("d"+i+"additions",format2(player.digitAdditionAmounts[i]));
+				if(player.digitAdditionAmounts[i].equals(0)) hideelement("d"+i+"additions");
+				update("d"+i+"amountDisplay",format2(player.digitAdditionAmounts[i]));
+				update("d"+i+"reqDisplay",format2(player.digitAdditionReqs[i]));
 			}
 			update("plusesDisplay",format2(player.pluses,player.notation));
 			update("digitShiftsDisplay",player.digitShifts);
@@ -487,6 +505,8 @@
 				if(player.u8===undefined) player.u8 = false;
 				if(player.u9===undefined) player.u9 = false;
 				if(player.DIGITS===undefined) player.DIGITS = [false,false,false]
+				if(player.digitAdditionAmounts===undefined) player.digitAdditionAmounts = decimalArray(10,0,0);
+			if(player.digitAdditionReqs===undefined) player.digitAdditionReqs = [new Decimal(40),new Decimal(37),new Decimal(34),new Decimal(31),new Decimal(28),new Decimal(25),new decimal(22),new Decimal(19),new decimal(16),new Decimal(13)];
 				
 				// Convert save to decimal
 				
@@ -498,6 +518,8 @@
 					player.digitMults[i] = new Decimal(player.digitMults[i])
 					player.digitUpgradeCosts[i] = new Decimal(player.digitUpgradeCosts[i])
 					player.digitUpgradeAmounts[i] = new Decimal(player.digitUpgradeAmounts[i])
+					player.digitAdditionAmounts[i] = new Decimal(player.digitAdditionAmounts[i]);
+					player.digitAdditionReqs[i] = new Decimal(player.digitAdditionReqs[i]);
 				}
 				player.pluses = new Decimal(player.pluses)
 				player.digitShiftCost = new Decimal(player.digitShiftCost)
@@ -571,61 +593,61 @@
 					<th>Cost of next digit</th>
 				</tr>
 				<tr id="d0row">
-					<td>0</td>
+					<td><span id="d0additions"></span>0</td>
 					<td><div id="0sDisplay">10</div></td>
 					<td><div id="d0amountDisplay">0</div></td>
 					<td><button id="d0button" onclick="buyDigit(0)">Cost: <span id="d0costDisplay">10</span></button></td>
 				</tr>
 				<tr id="d1row" style="display:none">
-					<td>1</td>
+					<td><span id="d1additions"></span>1</td>
 					<td><div id="1sDisplay">10</div></td>
 					<td><div id="d1amountDisplay">0</div></td>
 					<td><button id="d1button" onclick="buyDigit(1)">Cost: <span id="d1costDisplay">10</span></button></td>
 				</tr>
 				<tr id="d2row" style="display:none">
-					<td>2</td>
+					<td><span id="d2additions"></span>2</td>
 					<td><div id="2sDisplay">10</div></td>
 					<td><div id="d2amountDisplay">0</div></td>
 					<td><button id="d2button" onclick="buyDigit(2)">Cost: <span id="d2costDisplay">10</span></button></td>
 				</tr>
 				<tr id="d3row" style="display:none">
-					<td>3</td>
+					<td><span id="d3additions"></span>3</td>
 					<td><div id="3sDisplay">10</div></td>
 					<td><div id="d3amountDisplay">0</div></td>
 					<td><button id="d3button" onclick="buyDigit(3)">Cost: <span id="d3costDisplay">10</span></button></td>
 				</tr>
 				<tr id="d4row" style="display:none">
-					<td>4</td>
+					<td><span id="d4additions"></span>4</td>
 					<td><div id="4sDisplay">10</div></td>
 					<td><div id="d4amountDisplay">0</div></td>
 					<td><button id="d4button" onclick="buyDigit(4)">Cost: <span id="d4costDisplay">10</span></button></td>
 				</tr>
 				<tr id="d5row" style="display:none">
-					<td>5</td>
+					<td><span id="d5additions"></span>5</td>
 					<td><div id="5sDisplay">10</div></td>
 					<td><div id="d5amountDisplay">0</div></td>
 					<td><button id="d5button" onclick="buyDigit(5)">Cost: <span id="d5costDisplay">10</span></button></td>
 				</tr>
 				<tr id="d6row" style="display:none">
-					<td>6</td>
+					<td><span id="d6additions"></span>6</td>
 					<td><div id="6sDisplay">10</div></td>
 					<td><div id="d6amountDisplay">0</div></td>
 					<td><button id="d6button" onclick="buyDigit(6)">Cost: <span id="d6costDisplay">10</span></button></td>
 				</tr>
 				<tr id="d7row" style="display:none">
-					<td>7</td>
+					<td><span id="d7additions"></span>7</td>
 					<td><div id="7sDisplay">10</div></td>
 					<td><div id="d7amountDisplay">0</div></td>
 					<td><button id="d7button" onclick="buyDigit(7)">Cost: <span id="d7costDisplay">10</span></button></td>
 				</tr>
 				<tr id="d8row" style="display:none">
-					<td>8</td>
+					<td><span id="d8additions"></span>8</td>
 					<td><div id="8sDisplay">10</div></td>
 					<td><div id="d8amountDisplay">0</div></td>
 					<td><button id="d8button" onclick="buyDigit(8)">Cost: <span id="d8costDisplay">10</span></button></td>
 				</tr>
 				<tr id="d9row" style="display:none">
-					<td>9</td>
+					<td><span id="d9additions"></span>9</td>
 					<td><div id="9sDisplay">10</div></td>
 					<td><div id="d9amountDisplay">0</div></td>
 					<td><button id="d9button" onclick="buyDigit(9)">Cost: <span id="d9costDisplay">10</span></button></td>
@@ -656,8 +678,8 @@
 					<td><button id="d6UpgradeButton" onclick="upgradeDigit(6)" style="display:none">Double digit 6 production.<br>Current bonus: x<span id="d6multDisplay">0.016</span>.<br>Cost: <span id="d6UpgradeCostDisplay">262144</span> pluses.</button></td>
 					<td><button id="d7UpgradeButton" onclick="upgradeDigit(7)" style="display:none">Double digit 7 production.<br>Current bonus: x<span id="d7multDisplay">0.008</span>.<br>Cost: <span id="d7UpgradeCostDisplay">2097152</span> pluses.</button></td>
 					<td><button id="d8UpgradeButton" onclick="upgradeDigit(8)" style="display:none">Double digit 8 production.<br>Current bonus: x<span id="d8multDisplay">0.004</span>.<br>Cost: <span id="d8UpgradeCostDisplay">16777216</span> pluses.</button></td>
-					<td><button id="d9UpgradeButton" onclick="upgradeDigit(9)" style="display:none">Double digit 9 production.<br>Current bonus: x<span id="d9multDisplay">0.002</span>.<br>Cost: <span id="d9UpgradeCostDisplay">134217768</span> pluses.</button>
-				</tr></td>
+					<td><button id="d9UpgradeButton" onclick="upgradeDigit(9)" style="display:none">Double digit 9 production.<br>Current bonus: x<span id="d9multDisplay">0.002</span>.<br>Cost: <span id="d9UpgradeCostDisplay">134217768</span> pluses.</button></td>
+				</tr>
 			</table>
 			<div id="digitShiftInfo">
 			<p>You have done <span id="digitShiftsDisplay" style = "font-size: 24">0</span> digit shifts.<br>
@@ -668,6 +690,7 @@
 			<p>You have <span id="crossesDisplay" style = "font-size: 24">0</span> crosses.
 			<button id="upgradesSubtabButton" onclick="switchMultiplicationSubtab('upgrades')">Number Upgrades</button>
 			<button id="DIGITSSubtabButton" onclick="switchMultiplicationSubtab('autobuyers')" style="display:none">D.I.G.I.T.S.</button>
+			<button id="additionSubtabButton" onclick="switchMultiplicationSubtab('additions')" style="display:none">Digit Additions</button>
 			<div id="upgrades">
 				<table>
 					<tr>
@@ -687,12 +710,30 @@
 				</tr>
 			</table>
 			</div>
-			<div id="autobuyers">
+			<div id="autobuyers" style="display:none">
 				<button id="DIGITS1button" onclick="toggleDIGITS(1)" style="display:none">Digit Buy D.I.G.I.T.S.: <span id="DIGITS1display">Disabled</span></button>
 				<button id="DIGITS2button" onclick="toggleDIGITS(2)" style="display:none">Digit Upgrade D.I.G.I.T.S.: <span id="DIGITS2display">Disabled</span></button>
 				<button id="DIGITS3button" onclick="toggleDIGITS(3)" style="display:none">Digit Add D.I.G.I.T.S.: <span id="DIGITS3display">Disabled</span></button>
 			<span id="DIGITS3info">Amount of pluses needed to reset: <input id="minPlusesToBeGained" value="1"></input></span>
 			</div>
+			<div style="display:none" id="additions">
+				<table>
+					<tr>
+						<td><button id="d0AdditionButton" onclick="getDigitAddition(0)">Digit 0 Addition<br>Amount: <span id="d0additionAmountDisplay">0</span>.<br>Requirement: <span id="d0additionReqDisplay">40</span> digit 0s.</button></td>
+						<td><button id="d1AdditionButton" onclick="getDigitAddition(1)">Digit 1 Addition<br>Amount: <span id="d1additionAmountDisplay">0</span>.<br>Requirement: <span id="d1additionReqDisplay">37</span> digit 1s.</button></td>
+						<td><button id="d2AdditionButton" onclick="getDigitAddition(2)">Digit 2 Addition<br>Amount: <span id="d2additionAmountDisplay">0</span>.<br>Requirement: <span id="d2additionReqDisplay">34</span> digit 2s.</button></td>
+						<td><button id="d3AdditionButton" onclick="getDigitAddition(3)">Digit 3 Addition<br>Amount: <span id="d3additionAmountDisplay">0</span>.<br>Requirement: <span id="d3additionReqDisplay">31</span> digit 3s.</button></td>
+						<td><button id="d4AdditionButton" onclick="getDigitAddition(4)">Digit 4 Addition<br>Amount: <span id="d4additionAmountDisplay">0</span>.<br>Requirement: <span id="d4additionReqDisplay">28</span> digit 4s.</button></td>
+				</tr>
+				<tr>
+						<td><button id="d5AdditionButton" onclick="getDigitAddition(5)">Digit 5 Addition<br>Amount: <span id="d5additionAmountDisplay">0</span>.<br>Requirement: <span id="d5additionReqDisplay">25</span> digit 5s.</button></td>
+						<td><button id="d6AdditionButton" onclick="getDigitAddition(6)">Digit 6 Addition<br>Amount: <span id="d6additionAmountDisplay">0</span>.<br>Requirement: <span id="d6additionReqDisplay">22</span> digit 6s.</button></td>
+						<td><button id="d7AdditionButton" onclick="getDigitAddition(7)">Digit 7 Addition<br>Amount: <span id="d7additionAmountDisplay">0</span>.<br>Requirement: <span id="d7additionReqDisplay">19</span> digit 7s.</button></td>
+						<td><button id="d8AdditionButton" onclick="getDigitAddition(8)">Digit 8 Addition<br>Amount: <span id="d8additionAmountDisplay">0</span>.<br>Requirement: <span id="d8additionReqDisplay">16</span> digit 8s.</button></td>
+						<td><button id="d9AdditionButton" onclick="getDigitAddition(9)">Digit 9 Addition<br>Amount: <span id="d9additionAmountDisplay">0</span>.<br>Requirement: <span id="d9additionReqDisplay">13</span> digit 9s.</button></td>
+				</tr>
+			</table>
+		</div>
 		</div>
 <a href="howto.html">How To Play</a>
 <a href="about.html">About</a>
