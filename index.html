@@ -170,7 +170,7 @@
 				if(player.u5) player.nextDigit = 10
 				player.digitShiftCost = new Decimal(4)
 				player.digitAdditionAmounts = decimalArray(10,0,0)
-				player.digitadditionReqs = [new Decimal(40),new Decimal(37),new Decimal(34),new Decimal(31),new Decimal(28),new Decimal(25),new decimal(22),new Decimal(19),new decimal(16),new Decimal(13)]
+				player.digitadditionReqs = [new Decimal(40),new Decimal(37),new Decimal(34),new Decimal(31),new Decimal(28),new Decimal(25),new Decimal(22),new Decimal(19),new Decimal(16),new Decimal(13)]
 			}
 			if(layers >= 3) { // reset multiplication
 				player.digitMults = decimalArray(10, 1, 0.5)
@@ -424,7 +424,7 @@
 				showElement("d"+i+"UpgradeButton", player.digitShifts < i ? "none" : null);
 				showElement("d"+i+"additions");
 			update("d"+i+"additions",format2(player.digitAdditionAmounts[i]));
-				if(player.digitAdditionAmounts[i].equals(0)) hideelement("d"+i+"additions");
+				if(player.digitAdditionAmounts[i].equals(0)) hideElement("d"+i+"additions");
 				update("d"+i+"amountDisplay",format2(player.digitAdditionAmounts[i]));
 				update("d"+i+"reqDisplay",format2(player.digitAdditionReqs[i]));
 			}
