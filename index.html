@@ -135,7 +135,7 @@
 			digitShiftCost:new Decimal(4),
 			notation:0,
 			crosses:new Decimal(0),
-			numberUpgradeCosts:[new Decimal(1),new Decimal(3),new Decimal(5),new Decimal(10),new Decimal(50),new Decimal(100),new Decimal(5),new Decimal(50),new Decimal(500)],
+			numberUpgradeCosts:[new Decimal(1),new Decimal(3),new Decimal(5),new Decimal(10),new Decimal(50),new Decimal(100),new Decimal(5),new Decimal(50),new Decimal(500),new Decimal(10000)],
 			u1:new Decimal(1),
 			u2:false,
 			u3:false,
@@ -147,12 +147,15 @@
 			u9:false,
 			DIGITS:[false,false,false], // states of the 3 D.I.G.I.T.S. (false = disabled, true = enabled)
 			digitAdditionAmounts:decimalArray(10,0,0),
-			digitAdditionReqs:[new Decimal(40),new Decimal(37),new Decimal(34),new Decimal(31),new Decimal(28),new Decimal(25),new Decimal(22),new Decimal(19),new Decimal(16),new Decimal(13)]
+			digitAdditionReqs:[new Decimal(40),new Decimal(37),new Decimal(34),new Decimal(31),new Decimal(28),new Decimal(25),new Decimal(22),new Decimal(19),new Decimal(16),new Decimal(13)],
+			u10:false
 		}
 		
 		function resetPlayer(layers) { // main prestige function. Argument is layer, with 1 being addition, and counting up from there. A number one higher than the current limit of the game will only apply on hard reset.
 			var digitShiftEffect = new Decimal(0.5); // starting mult of each digit compared to previous one
 			if(player.u3) digitShiftEffect = new Decimal(0.55);
+			var upgradeCostMult = new Decimal(8); 
+			if(player.u10) upgradeCostMult = Decimal.pow(8,0.9);
 			if(layers >= 1) { // reset digits
 				player.numbers = decimalArray(10, 10, 1)
 				player.nps = decimalArray(10, 0, 0)
@@ -161,7 +164,7 @@
 			}
 			if(layers >= 2) { // reset addition
 				player.digitMults = decimalArray(10, player.u1, digitShiftEffect) // keeps affects of number upgrades, but not digit upgrades
-				player.digitUpgradeCosts = decimalArray(10, 1, 8)
+				player.digitUpgradeCosts = decimalArray(10, 1, upgradeCostMult)
 				player.digitUpgradeAmounts = decimalArray(10, 0, 0)
 				player.pluses = new Decimal(0)
 				player.digitShifts = 0
@@ -174,10 +177,11 @@
 			}
 			if(layers >= 3) { // reset multiplication
 				player.digitMults = decimalArray(10, 1, 0.5)
+				player.digitUpgradeCosts = decimalArray(10, 1, 8)
 				player.digitShifts = 0
 				player.nextDigit = 1
 				player.crosses = new Decimal(0)
-				player.numberUpgradeCosts = [new Decimal(1),new Decimal(3),new Decimal(5),new Decimal(10),new Decimal(50),new Decimal(100),new Decimal(5),new Decimal(50),new Decimal(500)]
+				player.numberUpgradeCosts = [new Decimal(1),new Decimal(3),new Decimal(5),new Decimal(10),new Decimal(50),new Decimal(100),new Decimal(5),new Decimal(50),new Decimal(500),new Decimal(10000)]
 				player.u1 = new Decimal(1)
 				player.u2 = false
 				player.u3 = false
@@ -189,6 +193,9 @@
 				player.u9 = false
 			player.DIGITS = [false,false,false]
 			multiplicationSubtab = "upgrades" // take him out of D.I.G.I.T.S. tab
+			player.digitAdditionAmounts = decimalArray(10,0,0)
+			player.digitAdditionReqs = [new Decimal(40),new Decimal(37),new Decimal(34),new Decimal(31),new Decimal(28),new Decimal(25),new Decimal(22),new Decimal(19),new Decimal(16),new Decimal(13)]
+			player.u10 = false
 			}
 		}
 
@@ -240,11 +247,13 @@
 		function upgradeDigit(i) {
 			var upgradeEffect = new Decimal(2);
 			if(player.u4) upgradeEffect = new Decimal(2.25);
+			var upgradeCostMult = new Decimal(2);
+			if(player.u10) upgradeCostMult = Decimal.pow(2,1.9);
 			if(player.digitUpgradeCosts[i].gt(player.pluses)) return 0; // Can't buy
 			player.pluses = player.pluses.subtract(player.digitUpgradeCosts[i]);
 			player.digitMults[i] = player.digitMults[i].multiply(upgradeEffect);
 			player.digitUpgradeAmounts[i] = player.digitUpgradeAmounts[i].add(1);
-			player.digitUpgradeCosts[i] = player.digitUpgradeCosts[i].multiply(Decimal.pow(2,i+1));
+			player.digitUpgradeCosts[i] = player.digitUpgradeCosts[i].multiply(Decimal.pow(upgradeCostMult,i+1));
 			if(player.digitUpgradeAmounts[i].gte(15)) player.digitUpgradeCosts[i] = player.digitUpgradeCosts[i].multiply(Decimal.pow(2,player.digitUpgradeAmounts[i].subtract(15)));
 			player.nps[i] = player.nps[i].multiply(2);
 		}
@@ -282,7 +291,7 @@
 
 		function buyNumberUpgrade(i) { // buys number upgrade i.
 			switch(i) { 
-				// n what follows, there should be one case for each number upgrade in the game (9 total). 
+				// n what follows, there should be one case for each number upgrade in the game (12 total). 
 				
 				case 1:
 				if(player.numberUpgradeCosts[0].gt(player.crosses)) return 0; // can't buy it
@@ -370,6 +379,17 @@
 				player.u9 = true;
 				showElement("DIGITS3button");
 				break;
+				
+				case 10:
+				if(player.u10) return 0; // already bought it once; don't do anything if he clicks it again
+				if(player.numberUpgradeCosts[9].gt(player.crosses)) return 0; // can't buy it
+				player.crosses = player.crosses.subtract(player.numberUpgradeCosts[9]);
+				player.u10 = true;
+				for(var i=0; i<=9; i++) {
+					player.digitUpgradeCosts[i] = player.digitUpgradeCosts[i].pow(0.9); // in case he bought it mid-run
+				}
+				break;
+				
 			}
 		}
 
@@ -498,7 +518,10 @@
 				if(player.lastUpdate===undefined) player.lastUpdate = Date.now();
 				if (player.notation===undefined) player.notation=0; // Yes, you start in standard notation. Deal with it.
 				if(player.crosses===undefined) player.crosses = new Decimal(0);
-				if(player.numberUpgradeCosts===undefined) player.numberUpgradeCosts = [new Decimal(1),new Decimal(3),new Decimal(5),new Decimal(10),new Decimal(50),new Decimal(100),new Decimal(5),new Decimal(50),new Decimal(500)];
+				if(player.numberUpgradeCosts===undefined) player.numberUpgradeCosts = [new Decimal(1),new Decimal(3),new Decimal(5),new Decimal(10),new Decimal(50),new Decimal(100),new Decimal(5),new Decimal(50),new Decimal(500),new Decimal(10000)];
+				if(player.numberUpgradecosts.length==9) { //define costs of upgrades 10-12 in case of a load of a pre-2.1 save
+					player.numberUpgradeCosts.push(new Decimal(10000));
+				}
 				if(player.u1===undefined) player.u1 = new Decimal(1);
 				if(player.u2===undefined) player.u2 = false;
 				if(player.u3===undefined) player.u3 = false;
@@ -511,6 +534,7 @@
 				if(player.DIGITS===undefined) player.DIGITS = [false,false,false]
 				if(player.digitAdditionAmounts===undefined) player.digitAdditionAmounts = decimalArray(10,0,0);
 			if(player.digitAdditionReqs===undefined) player.digitAdditionReqs = [new Decimal(40),new Decimal(37),new Decimal(34),new Decimal(31),new Decimal(28),new Decimal(25),new Decimal(22),new Decimal(19),new Decimal(16),new Decimal(13)];
+				if(player.u10===undefined) player.u9 = false;
 				
 				// Convert save to decimal
 				
@@ -712,13 +736,18 @@
 					<td><button id="u8button" onclick="buyNumberUpgrade(8)">Install Digit Upgrade d.I.G.I.T.S.<br>Cost: 50 crosses.</button></td>
 					<td><button id="u9button" onclick="buyNumberUpgrade(9)">Install Digit Add d.I.G.I.T.S.<br>Cost: 500 crosses.</button></td>
 				</tr>
+				<tr>
+						<td><button id="u10button" onclick="buyNumberUpgrade(10)">Digit upgrade costs are reduced from x to x^0.9.<br>Cost: 10,000 crosses.</button></td>
+						<td><button id="u11button" onclick="buyNumberUpgrade(11)">Digits are multiplied by their value, including digit additions (which add 10 to the value).<br>Cost: TBD crosses.</button></td>
+						<td><button id="u12button" onclick="buyNumberUpgrade(12)">Install x times last addition mode for Digit Add D.I.G.I.T.S.<br>Cost: TBD crosses.</button></td>
+				</tr>
 			</table>
 			</div>
 			<div id="autobuyers" style="display:none">
 				<button id="DIGITS1button" onclick="toggleDIGITS(1)" style="display:none">Digit Buy D.I.G.I.T.S.: <span id="DIGITS1display">Disabled</span></button>
 				<button id="DIGITS2button" onclick="toggleDIGITS(2)" style="display:none">Digit Upgrade D.I.G.I.T.S.: <span id="DIGITS2display">Disabled</span></button>
 				<button id="DIGITS3button" onclick="toggleDIGITS(3)" style="display:none">Digit Add D.I.G.I.T.S.: <span id="DIGITS3display">Disabled</span></button>
-			<span id="DIGITS3info">Amount of pluses needed to reset: <input id="minPlusesToBeGained" value="1"></input></span>
+			<span id="DIGITS3info">Amount of pluses needed to reset: <input id="minPlusesToBeGained" value="1e50"></input></span>
 			</div>
 			<div style="display:none" id="additions">
 				<table>
