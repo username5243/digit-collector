@@ -520,7 +520,7 @@
 				if (player.notation===undefined) player.notation=0; // Yes, you start in standard notation. Deal with it.
 				if(player.crosses===undefined) player.crosses = new Decimal(0);
 				if(player.numberUpgradeCosts===undefined) player.numberUpgradeCosts = [new Decimal(1),new Decimal(3),new Decimal(5),new Decimal(10),new Decimal(50),new Decimal(100),new Decimal(5),new Decimal(50),new Decimal(500),new Decimal(10000)];
-				if(player.numberUpgradeVosts.length==9) { //define costs of upgrades 10-12 in case of a load of a pre-2.1 save
+				if(player.numberUpgradeCosts.length==9) { //define costs of upgrades 10-12 in case of a load of a pre-2.1 save
 					player.numberUpgradeCosts.push(new Decimal(10000));
 				}
 				if(player.u1===undefined) player.u1 = new Decimal(1);
