@@ -466,6 +466,7 @@
 			// only upgrades 1 and 6 should ever change cost.
 			update("u1Display",format(player.u1,player.notation));
 			update("u6Display",format(player.u6,player.notation));
+			if(player.crosses.gt(10000)||player.u10||player.digitAdditionAmounts[0].gt(0)) showElement("newUpgrades","table-row");
 			
 			// Update UI
 			
