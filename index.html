@@ -248,13 +248,13 @@
 			var upgradeEffect = new Decimal(2);
 			if(player.u4) upgradeEffect = new Decimal(2.25);
 			var upgradeCostMult = new Decimal(2);
-			if(player.u10) upgradeCostMult = Decimal.pow(2,1.9);
+			if(player.u10) upgradeCostMult = Decimal.pow(2,0.9);
 			if(player.digitUpgradeCosts[i].gt(player.pluses)) return 0; // Can't buy
 			player.pluses = player.pluses.subtract(player.digitUpgradeCosts[i]);
 			player.digitMults[i] = player.digitMults[i].multiply(upgradeEffect);
 			player.digitUpgradeAmounts[i] = player.digitUpgradeAmounts[i].add(1);
 			player.digitUpgradeCosts[i] = player.digitUpgradeCosts[i].multiply(Decimal.pow(upgradeCostMult,i+1));
-			if(player.digitUpgradeAmounts[i].gte(15)) player.digitUpgradeCosts[i] = player.digitUpgradeCosts[i].multiply(Decimal.pow(2,player.digitUpgradeAmounts[i].subtract(15)));
+			if(player.digitUpgradeAmounts[i].gte(15)) player.digitUpgradeCosts[i] = player.digitUpgradeCosts[i].multiply(Decimal.pow(upgradeCostMult,player.digitUpgradeAmounts[i].subtract(15)));
 			player.nps[i] = player.nps[i].multiply(2);
 		}
 
@@ -463,7 +463,6 @@
 			update("u6costDisplay",format2(player.numberUpgradeCosts[5],player.notation)); 
 			if(player.u5) hideElement("digitShiftInfo")
 			if(!player.u5) showElement("digitShiftInfo")
-			// only upgrades 1 and 6 should ever change cost.
 			update("u1Display",format(player.u1,player.notation));
 			update("u6Display",format(player.u6,player.notation));
 			if(player.crosses.gt(10000)||player.u10||player.digitAdditionAmounts[0].gt(0)) showElement("newUpgrades","table-row");
